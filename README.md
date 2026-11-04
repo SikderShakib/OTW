@@ -1,4 +1,4 @@
-# OTW — সংগঠন নির্দেশক ও হিসাব সহকারী
+# চলার পথে (OTW) — সংগঠন নির্দেশক ও হিসাব সহকারী
 
 **Organization Directory & Financial Assistant** — a complete, responsive web application for managing organization members, digital ID cards, cash flow (জমা-খরচ) tracking, receipt scanning, and financial reporting. Built for organizations & trust management in Bangladesh.
 
@@ -51,10 +51,30 @@ OTW/
     ├── finance.js        # Cash-book ledger, filters, transaction CRUD
     ├── scanner.js        # OCR receipt scanning & field extraction
     ├── reports.js        # Charts, CSV export, printable statements
-    └── app.js            # Router, dashboard, settings, backup, init
+    ├── app.js            # Router, dashboard, settings, backup, init
+    ├── firebase-config.js# Paste your Firebase config here to enable Cloud Mode
+    └── cloud.js          # Optional Firebase layer: login, roles, live sync
+├── firestore.rules       # Firestore security rules (roles & permissions)
+├── CLOUD_SETUP.md        # Step-by-step guide: team login & cloud sync setup
+└── .github/workflows/    # Auto-deploy to GitHub Pages on push to main
 ```
 
 **Tech stack:** HTML5 · Tailwind CSS (CDN) · Vanilla JS (modular) · Chart.js · Tesseract.js (OCR) · html2canvas · QRCode.js · FontAwesome · Hind Siliguri + Inter fonts
+
+---
+
+## ☁️ Cloud Mode — Team Login & Live Sync (Optional)
+
+Out of the box the app runs in **Local Mode** (data per browser). Connect a free
+**Firebase** project to enable **Cloud Mode**:
+
+- 🔐 **Login accounts** (email/password) — new sign-ups wait as *Pending* until an admin approves them
+- 👥 **Roles:** **Admin** (full control + team management) · **Treasurer** (edit data) · **Viewer** (read-only)
+- 🔄 **Real-time sync** — an entry added on one phone appears on everyone's screen in seconds
+- 🛡️ Server-side enforcement via [`firestore.rules`](firestore.rules); offline cache keeps the app instant
+
+**Setup (≈10 minutes, free):** follow **[CLOUD_SETUP.md](CLOUD_SETUP.md)**, then paste your
+config into [`js/firebase-config.js`](js/firebase-config.js) (or via Settings → Cloud on the site).
 
 ---
 

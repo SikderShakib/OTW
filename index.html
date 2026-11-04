@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OTW — সংগঠন নির্দেশক ও হিসাব সহকারী</title>
+<title>চলার পথে (OTW) — সংগঠন নির্দেশক ও হিসাব সহকারী</title>
 <meta name="description" content="OTW — Organization Directory & Financial Assistant. Member directory, digital ID cards, cash book, receipt scanner and financial reports.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23065f46'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='24' font-weight='bold' fill='%23e7bc45' text-anchor='middle'%3EOTW%3C/text%3E%3C/svg%3E">
 
@@ -32,9 +32,30 @@ tailwind.config = {
 }
 </script>
 <link rel="stylesheet" href="css/style.css">
+
+<!-- Cloud mode (Firebase) config + boot gate: if a config exists, hold the
+     app behind a loading screen until login state is resolved (js/cloud.js) -->
+<script src="js/firebase-config.js"></script>
+<script>
+try {
+  var __otwCfg = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG) || JSON.parse(localStorage.getItem('otw_fb_config') || 'null');
+  if (__otwCfg && __otwCfg.apiKey && sessionStorage.getItem('otw_skip_cloud') !== '1') {
+    document.documentElement.classList.add('otw-cloud-wait');
+  }
+} catch (e) {}
+</script>
 </head>
 
 <body class="bg-slate-100 text-slate-800 font-sans antialiased">
+
+<!-- Cloud boot loader (visible only while cloud login is being resolved) -->
+<div id="cloudBoot">
+  <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lift">
+    <span class="text-brand-950 font-extrabold text-xl" style="font-family:Inter">OTW</span>
+  </div>
+  <i class="fa-solid fa-circle-notch fa-spin text-3xl text-gold-400"></i>
+  <p class="text-brand-100 font-medium" data-i18n="loadingCloud">ক্লাউডে সংযোগ হচ্ছে...</p>
+</div>
 
 <div id="app" class="flex min-h-screen">
 
@@ -48,7 +69,7 @@ tailwind.config = {
           <span class="text-brand-950 font-extrabold text-lg tracking-tight" style="font-family:Inter">OTW</span>
         </div>
         <div class="min-w-0">
-          <h1 class="org-name font-bold text-lg leading-tight truncate">OTW সংগঠন</h1>
+          <h1 class="org-name font-bold text-lg leading-tight truncate">চলার পথে (OTW)</h1>
           <p class="text-brand-200/80 text-xs leading-snug" data-i18n="appTagline">সংগঠন নির্দেশক ও হিসাব সহকারী</p>
         </div>
       </div>
@@ -94,11 +115,16 @@ tailwind.config = {
         <button onclick="openTxnModal('income')" class="hidden sm:inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-soft transition">
           <i class="fa-solid fa-plus"></i><span data-i18n="quickEntry">দ্রুত এন্ট্রি</span>
         </button>
-        <div class="hidden md:flex items-center gap-2.5 pl-1">
+        <!-- Cloud sync status (cloud mode only) -->
+        <span id="syncIndicator" class="hidden items-center gap-1.5 text-xs text-slate-500"></span>
+        <!-- Signed-in user (cloud mode only, filled by js/cloud.js) -->
+        <div id="cloudUserChip" class="hidden items-center gap-2.5 pl-1"></div>
+        <!-- Local-mode identity chip -->
+        <div id="localUserChip" class="hidden md:flex items-center gap-2.5 pl-1">
           <div class="w-10 h-10 rounded-full bg-brand-700 text-white flex items-center justify-center font-bold">A</div>
           <div class="leading-tight">
             <p class="text-sm font-semibold" data-i18n="admin">অ্যাডমিন</p>
-            <p class="text-[11px] text-slate-500 org-name truncate max-w-[120px]">OTW সংগঠন</p>
+            <p class="text-[11px] text-slate-500 org-name truncate max-w-[120px]">চলার পথে (OTW)</p>
           </div>
         </div>
       </div>
@@ -445,9 +471,24 @@ tailwind.config = {
               <p class="text-xs text-slate-400 flex gap-1.5 pt-1"><i class="fa-solid fa-circle-info mt-0.5"></i><span data-i18n="dataNote">সব ডেটা আপনার ব্রাউজারের লোকাল স্টোরেজে সংরক্ষিত থাকে। নিয়মিত ব্যাকআপ নেওয়ার পরামর্শ দেওয়া হচ্ছে।</span></p>
             </div>
             <div class="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
-              <p class="font-semibold text-slate-700 mb-1">OTW <span data-i18n="version">সংস্করণ</span> 1.0.0</p>
+              <p class="font-semibold text-slate-700 mb-1">OTW <span data-i18n="version">সংস্করণ</span> 1.1.0</p>
               <p data-i18n="aboutText">সংগঠনের সদস্য পরিচালনা, ডিজিটাল আইডি কার্ড, ক্যাশ বুক ও আর্থিক প্রতিবেদনের জন্য একটি সমন্বিত ওয়েব অ্যাপ্লিকেশন।</p>
             </div>
+          </div>
+        </div>
+
+        <!-- Cloud sync & team access (rendered by js/cloud.js) -->
+        <div class="panel mt-5">
+          <h3 class="panel-title mb-4"><i class="fa-solid fa-cloud text-brand-600"></i><span data-i18n="cloudTitle">ক্লাউড সিঙ্ক ও টিম অ্যাক্সেস</span></h3>
+          <div id="cloudCardBody">
+            <div class="flex items-center gap-2 text-sm mb-3">
+              <span class="pill pill-gray"><i class="fa-solid fa-mobile-screen"></i><span data-i18n="localMode">লোকাল মোড</span></span>
+              <span class="text-slate-500" data-i18n="localModeHint">ডেটা শুধু এই ব্রাউজারে সংরক্ষিত আছে। টিমের সবার সাথে শেয়ার করতে ক্লাউড সংযোগ করুন।</span>
+            </div>
+            <label class="label" data-i18n="firebaseConfigLabel">Firebase কনফিগ (JSON পেস্ট করুন)</label>
+            <textarea id="fbConfigText" rows="5" class="input font-mono !text-xs" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea>
+            <button onclick="window.OTWCloud && OTWCloud.saveLocalConfig()" class="btn-primary mt-3"><i class="fa-solid fa-cloud-arrow-up"></i><span data-i18n="connectCloud">ক্লাউডে সংযোগ করুন</span></button>
+            <p class="text-xs text-slate-400 mt-3 flex gap-1.5"><i class="fa-solid fa-circle-info mt-0.5"></i><span data-i18n="cloudSetupHint">Firebase প্রজেক্ট তৈরির ধাপে ধাপে নির্দেশনা পেতে রিপোজিটরির CLOUD_SETUP.md ফাইলটি দেখুন।</span></p>
           </div>
         </div>
       </section>
@@ -557,6 +598,48 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- ══════════════════ CLOUD LOGIN OVERLAY ══════════════════ -->
+<div id="loginOverlay" class="hidden fixed inset-0 z-[70] overflow-y-auto" style="background:linear-gradient(150deg,#022c22,#065f46 60%,#047857)">
+  <div class="min-h-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-lift p-7 sm:p-9 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-soft mx-auto">
+        <span class="text-brand-950 font-extrabold text-xl" style="font-family:Inter">OTW</span>
+      </div>
+      <h3 class="org-name text-xl font-bold mt-4">চলার পথে (OTW)</h3>
+      <p class="text-xs text-slate-400" data-i18n="appTagline">সংগঠন নির্দেশক ও হিসাব সহকারী</p>
+      <h4 id="loginTitleText" class="text-lg font-bold text-slate-800 mt-6" data-i18n="loginTitle">আপনার অ্যাকাউন্টে লগইন করুন</h4>
+      <p class="text-sm text-slate-500 mt-1" data-i18n="loginSubtitle">দলের সবার সাথে একই হালনাগাদ হিসাব ব্যবহার করুন</p>
+      <form id="loginForm" class="space-y-4 mt-6 text-left">
+        <div>
+          <label class="label" data-i18n="fEmail">ইমেইল</label>
+          <input id="loginEmail" type="email" class="input" placeholder="example@mail.com" required autocomplete="email">
+        </div>
+        <div>
+          <label class="label" data-i18n="fPassword">পাসওয়ার্ড</label>
+          <input id="loginPass" type="password" class="input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <p id="loginError" class="hidden text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"></p>
+        <button id="loginSubmit" type="submit" class="btn-primary w-full justify-center !py-3"><i class="fa-solid fa-right-to-bracket"></i><span data-i18n="signIn">লগইন</span></button>
+      </form>
+      <p class="text-sm text-slate-500 mt-5"><span id="loginToggleText"></span> <button id="loginToggle" type="button" class="text-brand-700 font-bold hover:underline"></button></p>
+      <button id="loginDemoLink" type="button" class="text-xs text-slate-400 hover:text-slate-600 hover:underline mt-4" data-i18n="localDemo">লোকাল ডেমো মোডে চালিয়ে যান</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PENDING APPROVAL OVERLAY ══════════════════ -->
+<div id="pendingOverlay" class="hidden fixed inset-0 z-[70] overflow-y-auto" style="background:linear-gradient(150deg,#022c22,#065f46 60%,#047857)">
+  <div class="min-h-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-lift p-7 sm:p-9 text-center">
+      <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto text-3xl"><i class="fa-solid fa-clock"></i></div>
+      <h4 class="text-lg font-bold text-slate-800 mt-5" data-i18n="pendingTitle">অনুমোদনের অপেক্ষায়</h4>
+      <p class="text-sm text-slate-500 mt-2" data-i18n="pendingText">আপনার অ্যাকাউন্ট তৈরি হয়েছে। সংগঠনের অ্যাডমিন অনুমোদন দিলেই আপনি প্রবেশ করতে পারবেন। অনুমোদনের পর এই পৃষ্ঠাটি স্বয়ংক্রিয়ভাবে খুলে যাবে।</p>
+      <p id="pendingEmail" class="text-sm font-semibold text-brand-700 mt-4"></p>
+      <button onclick="window.OTWCloud && OTWCloud.signOut()" class="btn-secondary mt-6"><i class="fa-solid fa-right-from-bracket"></i><span data-i18n="logout">লগআউট</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast + print area -->
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden">
   <div class="flex items-center gap-2.5 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-full shadow-lift"><i id="toastIcon" class="fa-solid fa-circle-check text-brand-400"></i><span id="toastMsg"></span></div>
@@ -578,5 +661,6 @@ tailwind.config = {
 <script src="js/scanner.js"></script>
 <script src="js/reports.js"></script>
 <script src="js/app.js"></script>
+<script src="js/cloud.js"></script>
 </body>
 </html>

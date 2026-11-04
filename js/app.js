@@ -129,6 +129,9 @@ function fillSettings() {
   $('setOrgAddress').value = db.settings.orgAddress || '';
   $('setMonthlyFee').value = db.settings.monthlyFee || 0;
   $('setLang').value = currentLang;
+  if (window.OTWCloud && window.OTWCloud.renderSettingsCard) {
+    try { window.OTWCloud.renderSettingsCard(); } catch (e) {}
+  }
 }
 function saveSettings() {
   db.settings.orgName = $('setOrgName').value.trim() || db.settings.orgName;
@@ -208,6 +211,14 @@ function closeSidebarMobile() {
 /* ── Init ───────────────────────────────────────────────── */
 function init() {
   currentLang = db.settings.lang === 'en' ? 'en' : 'bn';
+
+  /* Cloud boot safety: if the cloud layer hasn't resolved within 10s
+     (e.g. SDK unreachable), fall back to local mode instead of a stuck loader. */
+  setTimeout(function () {
+    if (document.documentElement.classList.contains('otw-cloud-wait') && !window.__otwCloudReady) {
+      document.documentElement.classList.remove('otw-cloud-wait');
+    }
+  }, 10000);
 
   /* Nav */
   document.querySelectorAll('.nav-item').forEach(n =>

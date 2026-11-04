@@ -206,7 +206,50 @@ const I18N = {
     cat_printing: 'মুদ্রণ ও প্রকাশনা',
     cat_transport: 'পরিবহন',
     cat_welfare: 'সামাজিক কল্যাণ',
-    cat_other_expense: 'অন্যান্য খরচ'
+    cat_other_expense: 'অন্যান্য খরচ',
+
+    /* Cloud & login */
+    cloudTitle: 'ক্লাউড সিঙ্ক ও টিম অ্যাক্সেস',
+    loginTitle: 'আপনার অ্যাকাউন্টে লগইন করুন',
+    signUpTitle: 'নতুন অ্যাকাউন্ট তৈরি করুন',
+    loginSubtitle: 'দলের সবার সাথে একই হালনাগাদ হিসাব ব্যবহার করুন',
+    fPassword: 'পাসওয়ার্ড',
+    signIn: 'লগইন',
+    signUp: 'নতুন অ্যাকাউন্ট',
+    noAccount: 'অ্যাকাউন্ট নেই?',
+    haveAccount: 'ইতিমধ্যে অ্যাকাউন্ট আছে?',
+    logout: 'লগআউট',
+    pendingTitle: 'অনুমোদনের অপেক্ষায়',
+    pendingText: 'আপনার অ্যাকাউন্ট তৈরি হয়েছে। সংগঠনের অ্যাডমিন অনুমোদন দিলেই আপনি প্রবেশ করতে পারবেন। অনুমোদনের পর এই পৃষ্ঠাটি স্বয়ংক্রিয়ভাবে খুলে যাবে।',
+    localDemo: 'লোকাল ডেমো মোডে চালিয়ে যান',
+    cloudMode: 'ক্লাউড মোড',
+    localMode: 'লোকাল মোড',
+    localModeHint: 'ডেটা শুধু এই ব্রাউজারে সংরক্ষিত আছে। টিমের সবার সাথে শেয়ার করতে ক্লাউড সংযোগ করুন।',
+    cloudConnected: 'ক্লাউডে সংযুক্ত',
+    syncing: 'সিঙ্ক হচ্ছে...',
+    synced: 'সিঙ্ক সম্পন্ন',
+    syncError: 'সিঙ্ক সমস্যা',
+    dataUpdated: 'অন্য ডিভাইস থেকে ডেটা আপডেট হয়েছে',
+    uroleLabel: 'ভূমিকা',
+    urole_admin: 'অ্যাডমিন',
+    urole_treasurer: 'কোষাধ্যক্ষ',
+    urole_viewer: 'দর্শক (শুধু দেখতে পারবেন)',
+    urole_pending: 'অপেক্ষমাণ',
+    teamAccess: 'টিম অ্যাক্সেস ব্যবস্থাপনা',
+    teamHint: 'নতুন সাইন-আপ করা ব্যবহারকারীরা "অপেক্ষমাণ" হিসেবে আসেন। এখান থেকে তাদের ভূমিকা (কোষাধ্যক্ষ / দর্শক / অ্যাডমিন) নির্ধারণ করে অনুমোদন দিন।',
+    viewerReadonly: 'আপনার অ্যাক্সেস শুধুমাত্র দেখার জন্য (Viewer) — সম্পাদনা করা যাবে না',
+    firebaseConfigLabel: 'Firebase কনফিগ (JSON পেস্ট করুন)',
+    connectCloud: 'ক্লাউডে সংযোগ করুন',
+    cloudSetupHint: 'Firebase প্রজেক্ট তৈরির ধাপে ধাপে নির্দেশনা পেতে রিপোজিটরির CLOUD_SETUP.md ফাইলটি দেখুন। স্থায়ী সেটআপের জন্য কনফিগটি js/firebase-config.js ফাইলে বসান।',
+    invalidConfig: 'অবৈধ কনফিগ — সঠিক Firebase কনফিগ JSON পেস্ট করুন',
+    signedInAs: 'লগইন করেছেন:',
+    youLabel: 'আপনি',
+    loadingCloud: 'ক্লাউডে সংযোগ হচ্ছে...',
+    errInvalidLogin: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়',
+    errEmailInUse: 'এই ইমেইলে ইতিমধ্যে একটি অ্যাকাউন্ট আছে — লগইন করুন',
+    errWeakPass: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
+    errInvalidEmail: 'সঠিক ইমেইল ঠিকানা দিন',
+    errGeneric: 'কিছু একটা সমস্যা হয়েছে — আবার চেষ্টা করুন'
   },
 
   en: {
@@ -403,7 +446,50 @@ const I18N = {
     cat_printing: 'Printing & Publication',
     cat_transport: 'Transport',
     cat_welfare: 'Social Welfare',
-    cat_other_expense: 'Other Expense'
+    cat_other_expense: 'Other Expense',
+
+    /* Cloud & login */
+    cloudTitle: 'Cloud Sync & Team Access',
+    loginTitle: 'Sign in to your account',
+    signUpTitle: 'Create a new account',
+    loginSubtitle: 'Use the same always-updated organization data with your whole team',
+    fPassword: 'Password',
+    signIn: 'Sign In',
+    signUp: 'Create Account',
+    noAccount: "Don't have an account?",
+    haveAccount: 'Already have an account?',
+    logout: 'Sign Out',
+    pendingTitle: 'Waiting for Approval',
+    pendingText: 'Your account has been created. An organization admin needs to approve your access — this page will open automatically once approved.',
+    localDemo: 'Continue in local demo mode',
+    cloudMode: 'Cloud Mode',
+    localMode: 'Local Mode',
+    localModeHint: 'Data is stored only in this browser. Connect the cloud to share it with your team.',
+    cloudConnected: 'Connected to cloud',
+    syncing: 'Syncing...',
+    synced: 'Synced',
+    syncError: 'Sync problem',
+    dataUpdated: 'Data updated from another device',
+    uroleLabel: 'Role',
+    urole_admin: 'Admin',
+    urole_treasurer: 'Treasurer',
+    urole_viewer: 'Viewer (read-only)',
+    urole_pending: 'Pending',
+    teamAccess: 'Team Access Management',
+    teamHint: 'New sign-ups arrive as "Pending". Approve them here by assigning a role (Treasurer / Viewer / Admin).',
+    viewerReadonly: 'You have view-only (Viewer) access — editing is disabled',
+    firebaseConfigLabel: 'Firebase Config (paste JSON)',
+    connectCloud: 'Connect to Cloud',
+    cloudSetupHint: 'See CLOUD_SETUP.md in the repository for step-by-step Firebase setup. For a permanent setup, place the config in js/firebase-config.js.',
+    invalidConfig: 'Invalid config — please paste a correct Firebase config JSON',
+    signedInAs: 'Signed in as:',
+    youLabel: 'You',
+    loadingCloud: 'Connecting to cloud...',
+    errInvalidLogin: 'Incorrect email or password',
+    errEmailInUse: 'An account already exists for this email — please sign in',
+    errWeakPass: 'Password must be at least 6 characters',
+    errInvalidEmail: 'Please enter a valid email address',
+    errGeneric: 'Something went wrong — please try again'
   }
 };
 
@@ -439,4 +525,7 @@ function setLang(lang) {
   renderCurrentPage();
   updateSidebarStats();
   updateHeaderDate();
+  if (typeof window !== 'undefined' && window.OTWCloud && window.OTWCloud.refreshUI) {
+    try { window.OTWCloud.refreshUI(); } catch (e) {}
+  }
 }

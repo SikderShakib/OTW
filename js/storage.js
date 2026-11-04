@@ -20,13 +20,17 @@ function loadDB() {
 }
 function saveDB() {
   try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (e) { console.warn('Storage full', e); }
+  /* Cloud mode: schedule a debounced push to Firestore (see js/cloud.js) */
+  if (typeof window !== 'undefined' && window.OTWCloud && window.OTWCloud.schedulePush) {
+    try { window.OTWCloud.schedulePush(); } catch (e) {}
+  }
 }
 
 /* ── Seed / demo data ───────────────────────────────────── */
 function seedData() {
   const settings = {
-    orgName: 'OTW সংগঠন',
-    orgNameEn: 'OTW Organization',
+    orgName: 'চলার পথে (OTW)',
+    orgNameEn: 'Cholar Pothe (OTW)',
     orgAddress: 'ধানমন্ডি, ঢাকা-১২০৫',
     monthlyFee: 200,
     lang: 'bn'
