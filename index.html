@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTW — সংগঠন নির্দেশক ও হিসাব সহকারী</title>
+<meta name="description" content="OTW — Organization Directory & Financial Assistant. Member directory, digital ID cards, cash book, receipt scanner and financial reports.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23065f46'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='24' font-weight='bold' fill='%23e7bc45' text-anchor='middle'%3EOTW%3C/text%3E%3C/svg%3E">
+
+<!-- Fonts: Hind Siliguri (Bengali) + Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand: {50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b',950:'#022c22'},
+        gold:  {100:'#fbf3d5',200:'#f7e5a8',300:'#f3d27a',400:'#e7bc45',500:'#d4a017',600:'#b8860b',700:'#96690a'}
+      },
+      fontFamily: { sans: ['"Hind Siliguri"','Inter','system-ui','sans-serif'] },
+      boxShadow: { soft: '0 2px 12px rgba(15, 23, 42, .06)', lift: '0 10px 30px rgba(15, 23, 42, .12)' }
+    }
+  }
+}
+</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-slate-100 text-slate-800 font-sans antialiased">
+
+<div id="app" class="flex min-h-screen">
+
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 z-30 hidden lg:hidden"></div>
+  <aside id="sidebar" class="fixed lg:sticky top-0 z-40 h-screen w-72 shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-300 bg-gradient-to-b from-brand-950 via-brand-900 to-brand-800 text-white flex flex-col">
+    <!-- Brand -->
+    <div class="px-6 pt-7 pb-6 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg shrink-0">
+          <span class="text-brand-950 font-extrabold text-lg tracking-tight" style="font-family:Inter">OTW</span>
+        </div>
+        <div class="min-w-0">
+          <h1 class="org-name font-bold text-lg leading-tight truncate">OTW সংগঠন</h1>
+          <p class="text-brand-200/80 text-xs leading-snug" data-i18n="appTagline">সংগঠন নির্দেশক ও হিসাব সহকারী</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-1.5 sidebar-scroll">
+      <button class="nav-item" data-page="dashboard"><i class="fa-solid fa-gauge-high w-5 text-center"></i><span data-i18n="navDashboard">ড্যাশবোর্ড</span></button>
+      <button class="nav-item" data-page="members"><i class="fa-solid fa-users w-5 text-center"></i><span data-i18n="navMembers">সদস্যবৃন্দ</span><span id="navMemberCount" class="ml-auto text-xs bg-white/15 rounded-full px-2 py-0.5"></span></button>
+      <button class="nav-item" data-page="finance"><i class="fa-solid fa-book-open w-5 text-center"></i><span data-i18n="navFinance">জমা-খরচ</span></button>
+      <button class="nav-item" data-page="scanner"><i class="fa-solid fa-receipt w-5 text-center"></i><span data-i18n="navScanner">রশিদ স্ক্যানার</span></button>
+      <button class="nav-item" data-page="reports"><i class="fa-solid fa-chart-pie w-5 text-center"></i><span data-i18n="navReports">আর্থিক প্রতিবেদন</span></button>
+      <button class="nav-item" data-page="settings"><i class="fa-solid fa-gear w-5 text-center"></i><span data-i18n="navSettings">সেটিংস</span></button>
+    </nav>
+
+    <!-- Balance widget -->
+    <div class="p-4">
+      <div class="rounded-2xl bg-white/10 border border-white/10 p-4 backdrop-blur">
+        <p class="text-brand-100/80 text-xs flex items-center gap-1.5"><i class="fa-solid fa-wallet text-gold-400"></i><span data-i18n="currentBalance">বর্তমান ব্যালেন্স</span></p>
+        <p id="sidebarBalance" class="text-2xl font-bold text-white mt-1">৳ ০</p>
+        <p id="sidebarBalanceSub" class="text-[11px] text-brand-100/60 mt-0.5"></p>
+      </div>
+      <p class="text-center text-[11px] text-brand-200/50 mt-4">© <span id="footerYear">২০২৬</span> OTW • <span data-i18n="madeIn">ঢাকা, বাংলাদেশ</span></p>
+    </div>
+  </aside>
+
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <div class="flex-1 min-w-0 flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-20 bg-white/85 backdrop-blur border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center gap-3">
+      <button id="menuBtn" class="lg:hidden w-10 h-10 rounded-lg hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-bars text-lg"></i></button>
+      <div class="min-w-0">
+        <h2 id="pageTitle" class="text-lg sm:text-xl font-bold text-slate-800 leading-tight truncate"></h2>
+        <p id="headerDate" class="text-xs text-slate-500"></p>
+      </div>
+      <div class="ml-auto flex items-center gap-2 sm:gap-3">
+        <!-- Language toggle -->
+        <div class="flex bg-slate-100 rounded-full p-1 text-sm font-semibold">
+          <button id="langBn" class="lang-btn px-3 py-1 rounded-full transition">বাংলা</button>
+          <button id="langEn" class="lang-btn px-3 py-1 rounded-full transition">EN</button>
+        </div>
+        <button onclick="openTxnModal('income')" class="hidden sm:inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-soft transition">
+          <i class="fa-solid fa-plus"></i><span data-i18n="quickEntry">দ্রুত এন্ট্রি</span>
+        </button>
+        <div class="hidden md:flex items-center gap-2.5 pl-1">
+          <div class="w-10 h-10 rounded-full bg-brand-700 text-white flex items-center justify-center font-bold">A</div>
+          <div class="leading-tight">
+            <p class="text-sm font-semibold" data-i18n="admin">অ্যাডমিন</p>
+            <p class="text-[11px] text-slate-500 org-name truncate max-w-[120px]">OTW সংগঠন</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto">
+
+      <!-- ─────────── PAGE: DASHBOARD ─────────── -->
+      <section id="page-dashboard" class="page">
+        <!-- Stat cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+          <div class="stat-card">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="stat-label" data-i18n="totalIncome">মোট আয়</p>
+                <p id="statIncome" class="stat-value text-brand-700">৳ ০</p>
+                <p id="statIncomeSub" class="stat-sub"></p>
+              </div>
+              <div class="stat-icon bg-brand-50 text-brand-600"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="stat-label" data-i18n="totalExpense">মোট ব্যয়</p>
+                <p id="statExpense" class="stat-value text-rose-600">৳ ০</p>
+                <p id="statExpenseSub" class="stat-sub"></p>
+              </div>
+              <div class="stat-icon bg-rose-50 text-rose-500"><i class="fa-solid fa-arrow-trend-down"></i></div>
+            </div>
+          </div>
+          <div class="stat-card border-gold-200" style="background:linear-gradient(135deg,#fffdf5,#fff)">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="stat-label" data-i18n="netBalance">নিট ব্যালেন্স</p>
+                <p id="statBalance" class="stat-value text-gold-600">৳ ০</p>
+                <p id="statBalanceSub" class="stat-sub"></p>
+              </div>
+              <div class="stat-icon bg-gold-100 text-gold-600"><i class="fa-solid fa-wallet"></i></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="stat-label" data-i18n="pendingSub">বকেয়া চাঁদা</p>
+                <p id="statPending" class="stat-value text-amber-600">৳ ০</p>
+                <p id="statPendingSub" class="stat-sub"></p>
+              </div>
+              <div class="stat-icon bg-amber-50 text-amber-500"><i class="fa-solid fa-hourglass-half"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 mt-5">
+          <div class="panel xl:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="panel-title"><i class="fa-solid fa-chart-column text-brand-600"></i><span data-i18n="monthlyChartTitle">মাসিক আয় বনাম ব্যয়</span></h3>
+              <span class="text-xs text-slate-400" data-i18n="last6Months">শেষ ৬ মাস</span>
+            </div>
+            <div class="h-72"><canvas id="chartMonthly"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-chart-pie text-brand-600"></i><span data-i18n="expenseCatTitle">ক্যাটাগরি অনুযায়ী ব্যয়</span></h3>
+            <div class="h-72 flex items-center justify-center"><canvas id="chartExpenseCat"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Lists -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5 mt-5">
+          <div class="panel xl:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="panel-title"><i class="fa-solid fa-arrow-right-arrow-left text-brand-600"></i><span data-i18n="recentTxn">সাম্প্রতিক লেনদেন</span></h3>
+              <button class="text-sm text-brand-700 font-semibold hover:underline" onclick="showPage('finance')"><span data-i18n="viewAll">সব দেখুন</span> <i class="fa-solid fa-arrow-right text-xs"></i></button>
+            </div>
+            <div id="recentTxnList" class="divide-y divide-slate-100"></div>
+          </div>
+          <div class="panel">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="panel-title"><i class="fa-solid fa-users text-brand-600"></i><span data-i18n="pendingMembers">বকেয়া সদস্যদের তালিকা</span></h3>
+            </div>
+            <p id="memberSummaryLine" class="text-xs text-slate-500 mb-3"></p>
+            <div id="pendingList" class="space-y-2.5"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── PAGE: MEMBERS ─────────── -->
+      <section id="page-members" class="page hidden">
+        <div class="panel">
+          <div class="flex flex-col lg:flex-row lg:items-center gap-3 mb-5">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input id="memberSearch" type="text" class="input pl-10" data-i18n-ph="searchMembers" placeholder="নাম, আইডি বা ফোন দিয়ে খুঁজুন...">
+            </div>
+            <select id="memberRoleFilter" class="input lg:w-52"></select>
+            <select id="memberStatusFilter" class="input lg:w-44">
+              <option value="" data-i18n="allStatus">সব অবস্থা</option>
+              <option value="active" data-i18n="statusActive">সক্রিয়</option>
+              <option value="inactive" data-i18n="statusInactive">নিষ্ক্রিয়</option>
+            </select>
+            <button onclick="openMemberModal()" class="btn-primary whitespace-nowrap"><i class="fa-solid fa-user-plus"></i><span data-i18n="addMember">নতুন সদস্য যোগ করুন</span></button>
+          </div>
+
+          <div class="overflow-x-auto -mx-5 px-5">
+            <table class="w-full min-w-[820px] text-sm">
+              <thead>
+                <tr class="text-left text-slate-500 border-b border-slate-200">
+                  <th class="th" data-i18n="colMember">সদস্য</th>
+                  <th class="th" data-i18n="colDesignation">পদবী</th>
+                  <th class="th" data-i18n="colPhone">ফোন নম্বর</th>
+                  <th class="th" data-i18n="colJoinDate">যোগদানের তারিখ</th>
+                  <th class="th" data-i18n="colSubStatus">চাঁদার অবস্থা</th>
+                  <th class="th" data-i18n="colStatus">অবস্থা</th>
+                  <th class="th text-right" data-i18n="colActions">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="membersTableBody"></tbody>
+            </table>
+            <div id="membersEmpty" class="hidden py-14 text-center text-slate-400">
+              <i class="fa-solid fa-users-slash text-4xl mb-3 block"></i><span data-i18n="noData">কোনো তথ্য পাওয়া যায়নি</span>
+            </div>
+          </div>
+          <p id="membersCountLine" class="text-xs text-slate-500 mt-4"></p>
+        </div>
+      </section>
+
+      <!-- ─────────── PAGE: FINANCE / CASH BOOK ─────────── -->
+      <section id="page-finance" class="page hidden">
+        <!-- Summary strip -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-5">
+          <div class="rounded-2xl p-5 text-white shadow-soft" style="background:linear-gradient(135deg,#065f46,#022c22)">
+            <p class="text-brand-100/80 text-sm flex items-center gap-2"><i class="fa-solid fa-wallet text-gold-400"></i><span data-i18n="currentBalance">বর্তমান ব্যালেন্স</span></p>
+            <p id="finBalance" class="text-3xl font-bold mt-1.5">৳ ০</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label" data-i18n="thisMonthIncome">এই মাসের আয়</p>
+            <p id="finMonthIncome" class="stat-value text-brand-700">৳ ০</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label" data-i18n="thisMonthExpense">এই মাসের ব্যয়</p>
+            <p id="finMonthExpense" class="stat-value text-rose-600">৳ ০</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="flex flex-col xl:flex-row xl:items-center gap-3 mb-5">
+            <div class="flex bg-slate-100 rounded-full p-1 text-sm font-semibold shrink-0">
+              <button class="ftab px-4 py-1.5 rounded-full transition" data-ftype="all" data-i18n="filterAll">সব</button>
+              <button class="ftab px-4 py-1.5 rounded-full transition" data-ftype="income" data-i18n="filterIncome">আয়</button>
+              <button class="ftab px-4 py-1.5 rounded-full transition" data-ftype="expense" data-i18n="filterExpense">ব্যয়</button>
+            </div>
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input id="finSearch" type="text" class="input pl-10" data-i18n-ph="searchTxn" placeholder="বিবরণ বা বিক্রেতা খুঁজুন...">
+            </div>
+            <select id="finCategoryFilter" class="input xl:w-52"></select>
+            <input id="finMonthFilter" type="month" class="input xl:w-48">
+            <div class="flex gap-2 shrink-0">
+              <button onclick="openTxnModal('income')" class="btn-primary flex-1 xl:flex-none"><i class="fa-solid fa-plus"></i><span data-i18n="addIncome">আয় যোগ করুন</span></button>
+              <button onclick="openTxnModal('expense')" class="btn-danger flex-1 xl:flex-none"><i class="fa-solid fa-minus"></i><span data-i18n="addExpense">ব্যয় যোগ করুন</span></button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto -mx-5 px-5">
+            <table class="w-full min-w-[860px] text-sm">
+              <thead>
+                <tr class="text-left text-slate-500 border-b border-slate-200">
+                  <th class="th" data-i18n="colDate">তারিখ</th>
+                  <th class="th" data-i18n="colDesc">বিবরণ</th>
+                  <th class="th" data-i18n="colCategory">ক্যাটাগরি</th>
+                  <th class="th text-right" data-i18n="colIncome">জমা (আয়)</th>
+                  <th class="th text-right" data-i18n="colExpense">খরচ (ব্যয়)</th>
+                  <th class="th text-right" data-i18n="colBalance">ব্যালেন্স</th>
+                  <th class="th text-right" data-i18n="colActions">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="txnTableBody"></tbody>
+            </table>
+            <div id="txnEmpty" class="hidden py-14 text-center text-slate-400">
+              <i class="fa-solid fa-receipt text-4xl mb-3 block"></i><span data-i18n="noData">কোনো তথ্য পাওয়া যায়নি</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm mt-4 pt-4 border-t border-slate-100">
+            <span><span class="text-slate-500" data-i18n="filteredIncome">ফিল্টারকৃত আয়:</span> <b id="finFilteredIncome" class="text-brand-700"></b></span>
+            <span><span class="text-slate-500" data-i18n="filteredExpense">ফিল্টারকৃত ব্যয়:</span> <b id="finFilteredExpense" class="text-rose-600"></b></span>
+            <span class="ml-auto text-slate-500" id="txnCountLine"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── PAGE: RECEIPT SCANNER ─────────── -->
+      <section id="page-scanner" class="page hidden">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+          <!-- Upload + OCR -->
+          <div class="panel">
+            <h3 class="panel-title mb-2"><i class="fa-solid fa-receipt text-brand-600"></i><span data-i18n="scannerTitle">ক্যাশ মেমো / রশিদ স্ক্যানার</span></h3>
+            <p class="text-sm text-slate-500 mb-4" data-i18n="scannerDesc">রশিদ বা ক্যাশ মেমোর ছবি আপলোড করুন — OCR প্রযুক্তি স্বয়ংক্রিয়ভাবে বিক্রেতার নাম, তারিখ ও মোট টাকার পরিমাণ বের করে নেবে।</p>
+
+            <div id="dropzone" class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center cursor-pointer hover:border-brand-500 hover:bg-brand-50/50 transition">
+              <input id="receiptInput" type="file" accept="image/*" class="hidden">
+              <div id="dropzoneEmpty">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-brand-500 mb-3 block"></i>
+                <p class="text-sm text-slate-600 font-medium" data-i18n="dropText">রশিদের ছবি এখানে টেনে আনুন অথবা ক্লিক করে নির্বাচন করুন</p>
+                <p class="text-xs text-slate-400 mt-1">JPG, PNG, WEBP</p>
+              </div>
+              <img id="receiptPreview" class="hidden max-h-64 mx-auto rounded-xl shadow-soft" alt="Receipt preview">
+            </div>
+
+            <div id="ocrProgressWrap" class="hidden mt-4">
+              <div class="flex justify-between text-xs text-slate-500 mb-1.5"><span data-i18n="scanning">স্ক্যান হচ্ছে...</span><span id="ocrStatus"></span></div>
+              <div class="h-2.5 bg-slate-200 rounded-full overflow-hidden"><div id="ocrBar" class="h-full bg-brand-600 rounded-full transition-all duration-300" style="width:0%"></div></div>
+            </div>
+
+            <button id="scanBtn" class="btn-primary w-full mt-4 justify-center"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="scanNow">স্ক্যান করুন (OCR)</span></button>
+
+            <div id="ocrTextWrap" class="hidden mt-5">
+              <p class="text-sm font-semibold text-slate-700 mb-2" data-i18n="rawText">স্ক্যানকৃত পাঠ্য</p>
+              <pre id="ocrText" class="bg-slate-900 text-brand-100 text-xs rounded-xl p-4 max-h-52 overflow-auto whitespace-pre-wrap"></pre>
+            </div>
+          </div>
+
+          <!-- Extracted fields -->
+          <div class="panel h-fit">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-file-pen text-brand-600"></i><span data-i18n="extractedTitle">স্ক্যানকৃত তথ্য যাচাই করুন</span></h3>
+            <div class="space-y-4">
+              <div>
+                <label class="label" data-i18n="fVendor">বিক্রেতা / দোকানের নাম</label>
+                <input id="scanVendor" type="text" class="input">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="label" data-i18n="fDate">তারিখ</label>
+                  <input id="scanDate" type="date" class="input">
+                </div>
+                <div>
+                  <label class="label" data-i18n="fAmount">পরিমাণ (৳)</label>
+                  <input id="scanAmount" type="number" min="0" step="any" class="input">
+                </div>
+              </div>
+              <div>
+                <label class="label" data-i18n="fCategory">ক্যাটাগরি</label>
+                <select id="scanCategory" class="input"></select>
+              </div>
+              <div>
+                <label class="label" data-i18n="fDesc">বিবরণ</label>
+                <input id="scanDesc" type="text" class="input">
+              </div>
+              <button id="addScanBtn" class="btn-primary w-full justify-center !py-3"><i class="fa-solid fa-book-open"></i><span data-i18n="addAsExpense">ব্যয় হিসেবে ক্যাশ বুকে যোগ করুন</span></button>
+              <p class="text-xs text-slate-400 flex gap-1.5"><i class="fa-solid fa-circle-info mt-0.5"></i><span data-i18n="scannerNote">টিপস: পরিষ্কার ও সোজা করে তোলা ছবিতে OCR সবচেয়ে ভালো ফল দেয়। স্ক্যানের পর তথ্য যাচাই করে নিন।</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── PAGE: REPORTS ─────────── -->
+      <section id="page-reports" class="page hidden">
+        <div class="panel mb-5">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <h3 class="panel-title"><i class="fa-solid fa-chart-line text-brand-600"></i><span data-i18n="reportsTitle">আর্থিক প্রতিবেদন ও বিশ্লেষণ</span></h3>
+            <div class="sm:ml-auto flex flex-wrap items-center gap-2">
+              <label class="text-sm text-slate-500" data-i18n="year">বছর</label>
+              <select id="reportYear" class="input !w-32"></select>
+              <button onclick="exportCSV()" class="btn-secondary"><i class="fa-solid fa-file-csv text-brand-600"></i><span data-i18n="exportCSV">CSV এক্সপোর্ট</span></button>
+              <button onclick="printStatement()" class="btn-primary"><i class="fa-solid fa-print"></i><span data-i18n="printStatement">বিবরণী প্রিন্ট / PDF</span></button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+            <div class="rounded-xl bg-brand-50 border border-brand-100 p-4"><p class="text-xs text-slate-500" data-i18n="yearIncome">বছরের মোট আয়</p><p id="repYearIncome" class="text-xl font-bold text-brand-700 mt-0.5">৳ ০</p></div>
+            <div class="rounded-xl bg-rose-50 border border-rose-100 p-4"><p class="text-xs text-slate-500" data-i18n="yearExpense">বছরের মোট ব্যয়</p><p id="repYearExpense" class="text-xl font-bold text-rose-600 mt-0.5">৳ ০</p></div>
+            <div class="rounded-xl bg-gold-100/60 border border-gold-200 p-4"><p class="text-xs text-slate-500" data-i18n="yearNet">বছরের নিট অবস্থা</p><p id="repYearNet" class="text-xl font-bold text-gold-600 mt-0.5">৳ ০</p></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-5">
+          <div class="panel xl:col-span-2">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-chart-line text-brand-600"></i><span data-i18n="trendTitle">মাসিক প্রবণতা</span></h3>
+            <div class="h-72"><canvas id="chartTrend"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-chart-pie text-brand-600"></i><span data-i18n="incomeCatTitle">ক্যাটাগরি অনুযায়ী আয়</span></h3>
+            <div class="h-72 flex items-center justify-center"><canvas id="chartIncomeCat"></canvas></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5 mt-5">
+          <div class="panel">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-table text-brand-600"></i><span data-i18n="monthlySummary">মাসিক সারসংক্ষেপ</span></h3>
+            <div class="overflow-x-auto -mx-5 px-5">
+              <table class="w-full min-w-[420px] text-sm">
+                <thead><tr class="text-left text-slate-500 border-b border-slate-200">
+                  <th class="th" data-i18n="colMonth">মাস</th>
+                  <th class="th text-right" data-i18n="income">আয়</th>
+                  <th class="th text-right" data-i18n="expense">ব্যয়</th>
+                </tr></thead>
+                <tbody id="monthlyTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title mb-4"><i class="fa-solid fa-layer-group text-brand-600"></i><span data-i18n="catBreakdown">ক্যাটাগরি বিশ্লেষণ</span></h3>
+            <div class="overflow-x-auto -mx-5 px-5">
+              <table class="w-full min-w-[420px] text-sm">
+                <thead><tr class="text-left text-slate-500 border-b border-slate-200">
+                  <th class="th" data-i18n="colCategory">ক্যাটাগরি</th>
+                  <th class="th text-right" data-i18n="colCount">সংখ্যা</th>
+                  <th class="th text-right" data-i18n="colTotal">মোট</th>
+                  <th class="th text-right">%</th>
+                </tr></thead>
+                <tbody id="catTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────── PAGE: SETTINGS ─────────── -->
+      <section id="page-settings" class="page hidden">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+          <div class="panel h-fit">
+            <h3 class="panel-title mb-5"><i class="fa-solid fa-building text-brand-600"></i><span data-i18n="orgSettings">সংগঠনের তথ্য</span></h3>
+            <div class="space-y-4">
+              <div><label class="label" data-i18n="fOrgName">সংগঠনের নাম (বাংলা)</label><input id="setOrgName" type="text" class="input"></div>
+              <div><label class="label" data-i18n="fOrgNameEn">সংগঠনের নাম (English)</label><input id="setOrgNameEn" type="text" class="input"></div>
+              <div><label class="label" data-i18n="fOrgAddress">সংগঠনের ঠিকানা</label><input id="setOrgAddress" type="text" class="input"></div>
+              <div class="grid grid-cols-2 gap-4">
+                <div><label class="label" data-i18n="fMonthlyFee">মাসিক চাঁদা (৳)</label><input id="setMonthlyFee" type="number" min="0" class="input"></div>
+                <div>
+                  <label class="label" data-i18n="language">ভাষা</label>
+                  <select id="setLang" class="input"><option value="bn">বাংলা</option><option value="en">English</option></select>
+                </div>
+              </div>
+              <button onclick="saveSettings()" class="btn-primary w-full justify-center"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="save">সংরক্ষণ করুন</span></button>
+            </div>
+          </div>
+
+          <div class="panel h-fit">
+            <h3 class="panel-title mb-5"><i class="fa-solid fa-database text-brand-600"></i><span data-i18n="dataMgmt">ডেটা ব্যবস্থাপনা</span></h3>
+            <div class="space-y-3">
+              <button onclick="exportBackup()" class="btn-secondary w-full justify-center"><i class="fa-solid fa-download text-brand-600"></i><span data-i18n="exportBackup">ব্যাকআপ এক্সপোর্ট (JSON)</span></button>
+              <label class="btn-secondary w-full justify-center cursor-pointer"><i class="fa-solid fa-upload text-brand-600"></i><span data-i18n="importBackup">ব্যাকআপ ইমপোর্ট</span><input id="importInput" type="file" accept=".json" class="hidden"></label>
+              <button onclick="loadDemoData()" class="btn-secondary w-full justify-center"><i class="fa-solid fa-wand-magic-sparkles text-gold-500"></i><span data-i18n="loadDemo">ডেমো ডেটা লোড করুন</span></button>
+              <button onclick="clearAllData()" class="btn-danger w-full justify-center"><i class="fa-solid fa-trash"></i><span data-i18n="clearData">সব ডেটা মুছে ফেলুন</span></button>
+              <p class="text-xs text-slate-400 flex gap-1.5 pt-1"><i class="fa-solid fa-circle-info mt-0.5"></i><span data-i18n="dataNote">সব ডেটা আপনার ব্রাউজারের লোকাল স্টোরেজে সংরক্ষিত থাকে। নিয়মিত ব্যাকআপ নেওয়ার পরামর্শ দেওয়া হচ্ছে।</span></p>
+            </div>
+            <div class="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
+              <p class="font-semibold text-slate-700 mb-1">OTW <span data-i18n="version">সংস্করণ</span> 1.0.0</p>
+              <p data-i18n="aboutText">সংগঠনের সদস্য পরিচালনা, ডিজিটাল আইডি কার্ড, ক্যাশ বুক ও আর্থিক প্রতিবেদনের জন্য একটি সমন্বিত ওয়েব অ্যাপ্লিকেশন।</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: MEMBER ══════════════════ -->
+<div id="memberModal" class="modal">
+  <div class="modal-backdrop" data-close="memberModal"></div>
+  <div class="modal-panel max-w-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="memberModalTitle" class="text-lg font-bold"></h3>
+      <button class="icon-btn" data-close="memberModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="memberForm" class="space-y-4">
+      <input type="hidden" id="mEditId">
+      <div class="flex items-center gap-4">
+        <div id="mPhotoPreview" class="w-20 h-20 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 text-2xl font-bold overflow-hidden shrink-0"><i class="fa-solid fa-user text-slate-300"></i></div>
+        <div>
+          <label class="btn-secondary cursor-pointer !py-2"><i class="fa-solid fa-camera text-brand-600"></i><span data-i18n="uploadPhoto">ছবি আপলোড</span><input id="mPhotoInput" type="file" accept="image/*" class="hidden"></label>
+          <p class="text-xs text-slate-400 mt-2" data-i18n="photoHint">আইডি কার্ডে ছবিটি প্রদর্শিত হবে</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="label"><span data-i18n="fName">পূর্ণ নাম</span> *</label><input id="mName" type="text" class="input" required></div>
+        <div><label class="label" data-i18n="fMemberId">সদস্য আইডি</label><input id="mMemberId" type="text" class="input" placeholder="OTW-001"></div>
+        <div><label class="label" data-i18n="fDesignation">পদবী</label><select id="mDesignation" class="input"></select></div>
+        <div><label class="label"><span data-i18n="fPhone">ফোন নম্বর</span> *</label><input id="mPhone" type="tel" class="input" placeholder="01XXXXXXXXX" required></div>
+        <div><label class="label" data-i18n="fEmail">ইমেইল</label><input id="mEmail" type="email" class="input" placeholder="example@mail.com"></div>
+        <div><label class="label" data-i18n="fBlood">রক্তের গ্রুপ</label>
+          <select id="mBlood" class="input"><option value="">—</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+        </div>
+        <div><label class="label" data-i18n="fJoinDate">যোগদানের তারিখ</label><input id="mJoinDate" type="date" class="input"></div>
+        <div><label class="label" data-i18n="fStatus">অবস্থা</label>
+          <select id="mStatus" class="input"><option value="active" data-i18n="statusActive">সক্রিয়</option><option value="inactive" data-i18n="statusInactive">নিষ্ক্রিয়</option></select>
+        </div>
+        <div class="sm:col-span-2"><label class="label" data-i18n="fAddress">ঠিকানা</label><input id="mAddress" type="text" class="input"></div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 justify-center"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="save">সংরক্ষণ করুন</span></button>
+        <button type="button" class="btn-secondary" data-close="memberModal"><span data-i18n="cancel">বাতিল</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: TRANSACTION ══════════════════ -->
+<div id="txnModal" class="modal">
+  <div class="modal-backdrop" data-close="txnModal"></div>
+  <div class="modal-panel max-w-lg">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="txnModalTitle" class="text-lg font-bold"></h3>
+      <button class="icon-btn" data-close="txnModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="txnForm" class="space-y-4">
+      <input type="hidden" id="tEditId">
+      <input type="hidden" id="tType" value="income">
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+        <button type="button" id="tTypeIncome" class="ttype-btn" onclick="setTxnType('income')"><i class="fa-solid fa-arrow-trend-up"></i> <span data-i18n="income">আয়</span></button>
+        <button type="button" id="tTypeExpense" class="ttype-btn" onclick="setTxnType('expense')"><i class="fa-solid fa-arrow-trend-down"></i> <span data-i18n="expense">ব্যয়</span></button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="label" data-i18n="fDate">তারিখ</label> *<input id="tDate" type="date" class="input" required></div>
+        <div><label class="label" data-i18n="fAmount">পরিমাণ (৳)</label> *<input id="tAmount" type="number" min="1" step="any" class="input" required></div>
+      </div>
+      <div><label class="label" data-i18n="fCategory">ক্যাটাগরি</label><select id="tCategory" class="input"></select></div>
+      <div id="tMemberWrap" class="hidden"><label class="label" data-i18n="fMember">সদস্য নির্বাচন করুন</label><select id="tMember" class="input"></select></div>
+      <div><label class="label" data-i18n="fDesc">বিবরণ</label><input id="tDesc" type="text" class="input"></div>
+      <div id="tVendorWrap"><label class="label" data-i18n="fVendor">বিক্রেতা / দোকানের নাম</label><input id="tVendor" type="text" class="input"></div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 justify-center"><i class="fa-solid fa-floppy-disk"></i><span data-i18n="save">সংরক্ষণ করুন</span></button>
+        <button type="button" class="btn-secondary" data-close="txnModal"><span data-i18n="cancel">বাতিল</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: ID CARD ══════════════════ -->
+<div id="idCardModal" class="modal">
+  <div class="modal-backdrop" data-close="idCardModal"></div>
+  <div class="modal-panel max-w-xl">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-id-card text-brand-600"></i><span data-i18n="idCardTitle">ডিজিটাল সদস্য আইডি কার্ড</span></h3>
+      <button class="icon-btn" data-close="idCardModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="idCardContainer" class="flex justify-center py-2"></div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="printIdCard()" class="btn-secondary flex-1 justify-center"><i class="fa-solid fa-print text-brand-600"></i><span data-i18n="print">প্রিন্ট</span></button>
+      <button onclick="downloadIdCard()" class="btn-primary flex-1 justify-center"><i class="fa-solid fa-download"></i><span data-i18n="downloadPng">PNG ডাউনলোড</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL: CONFIRM ══════════════════ -->
+<div id="confirmModal" class="modal">
+  <div class="modal-backdrop" data-close="confirmModal"></div>
+  <div class="modal-panel max-w-sm text-center">
+    <div class="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 class="text-lg font-bold mb-2" data-i18n="confirmTitle">নিশ্চিত করুন</h3>
+    <p id="confirmMsg" class="text-sm text-slate-500 mb-6"></p>
+    <div class="flex gap-3">
+      <button id="confirmYes" class="btn-danger flex-1 justify-center"><span data-i18n="yesDelete">হ্যাঁ, মুছে ফেলুন</span></button>
+      <button class="btn-secondary flex-1 justify-center" data-close="confirmModal"><span data-i18n="cancel">বাতিল</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast + print area -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden">
+  <div class="flex items-center gap-2.5 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-full shadow-lift"><i id="toastIcon" class="fa-solid fa-circle-check text-brand-400"></i><span id="toastMsg"></span></div>
+</div>
+<div id="print-area"></div>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- App -->
+<script src="js/i18n.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/members.js"></script>
+<script src="js/finance.js"></script>
+<script src="js/scanner.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
