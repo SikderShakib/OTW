@@ -133,6 +133,15 @@ tbody tr:hover { background: #f8fafc; }
 #toast { animation: toastIn .3s ease both; }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
+/* ── Cloud boot gate (login loading screen) ─────────────── */
+#cloudBoot {
+  display: none; position: fixed; inset: 0; z-index: 80;
+  background: linear-gradient(150deg, #022c22, #065f46 60%, #047857);
+  flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.otw-cloud-wait #cloudBoot { display: flex; }
+.otw-cloud-wait #app { visibility: hidden; }
+
 /* ════════════════════════════════════════════════════════════
    DIGITAL MEMBER ID CARD  (CR80 ratio 85.6 × 54 mm)
    ════════════════════════════════════════════════════════════ */
