@@ -26,4 +26,12 @@
    Real security is enforced by firestore.rules + login roles.
    ════════════════════════════════════════════════════════════ */
 
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+     apiKey: "AIzaSyDzqFSuzSc_LV9ozZzp8lsEdSaaDqX4eLQ",
+   authDomain: "otw-demo-project.firebaseapp.com",
+   projectId: "otw-demo-project",
+   storageBucket: "otw-demo-project.firebasestorage.app",
+   messagingSenderId: "399606768606",
+   appId: "1:399606768606:web:b45291905f8e9288e4b34f",
+   measurementId: "G-TC47BB02G2"
+};
