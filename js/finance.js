@@ -94,8 +94,8 @@ function ensureSportsChip() {
          finSportsOnly = !finSportsOnly;
          syncSportsChip();
          renderFinance();
-      }
-                           tabs[tabs.length - 1].after(btn);
+      });
+      tabs[tabs.length - 1].after(btn);
    }
    syncSportsChip();
 }
