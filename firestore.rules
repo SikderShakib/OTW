@@ -34,12 +34,12 @@ service cloud.firestore {
     }
 
     function myRole() {
-      var d = myRoleData();
+      let d = myRoleData();
       return d != null ? d.role : 'none';
     }
 
     function myMemberId() {
-      var d = myRoleData();
+      let d = myRoleData();
       return (d != null && 'memberId' in d && d.memberId is string) ? d.memberId : '';
     }
 
