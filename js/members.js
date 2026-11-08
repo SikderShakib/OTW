@@ -116,9 +116,11 @@ function saveMember(e) {
   if (editId) {
     Object.assign(db.members.find(m => m.id === editId), data);
     showToast(t('memberUpdated'));
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('member_edit', data.name + ' (' + memberId + ')', roleName(data.designation));
   } else {
     db.members.push({ id: uid(), lastPaid: null, ...data });
     showToast(t('memberAdded'));
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('member_add', data.name + ' (' + memberId + ')', roleName(data.designation));
   }
   saveDB();
   closeModal('memberModal');
@@ -126,7 +128,9 @@ function saveMember(e) {
 }
 
 function deleteMember(id) {
+  const m = db.members.find(x => x.id === id);
   confirmAction(t('confirmDelete'), () => {
+    if (window.OTWCloudLogActivity && m) window.OTWCloudLogActivity('member_delete', m.name + ' (' + (m.memberId || '') + ')', roleName(m.designation));
     db.members = db.members.filter(m => m.id !== id);
     saveDB();
     showToast(t('memberDeleted'));
@@ -140,12 +144,14 @@ function toggleMemberStatus(id) {
   if (m.status === 'active') {
     confirmAction(t('confirmDeactivate'), () => {
       m.status = 'inactive';
+      if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('member_status', m.name + ' (' + (m.memberId || '') + ')', t('statusInactive'));
       saveDB();
       showToast(t('memberDeactivated'));
       refreshAll();
     });
   } else {
     m.status = 'active';
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('member_status', m.name + ' (' + (m.memberId || '') + ')', t('statusActive'));
     saveDB();
     showToast(t('memberActivated'));
     refreshAll();
