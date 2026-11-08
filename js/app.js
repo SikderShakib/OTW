@@ -5,7 +5,7 @@
 
 let currentPage = 'dashboard';
 const PAGE_TITLES = {
-  dashboard: 'navDashboard', members: 'navMembers', dues: 'navDues', finance: 'cashBook',
+  dashboard: 'navDashboard', members: 'navMembers', dues: 'navDues', activity: 'navActivity', finance: 'cashBook',
   scanner: 'navScanner', reports: 'navReports', settings: 'navSettings',
   myprofile: 'myProfile'
 };
@@ -25,7 +25,8 @@ function showPage(page) {
 function renderCurrentPage() {
   if (currentPage === 'dashboard') renderDashboard();
   else if (currentPage === 'members') renderMembers();
-  else if (currentPage === 'dues') renderDues();
+  else if (currentPage === 'dues') renderDues();   
+  else if (currentPage === 'activity') renderActivity();
   else if (currentPage === 'finance') renderFinance();
   else if (currentPage === 'reports') renderReports();
   else if (currentPage === 'settings') fillSettings();
@@ -97,7 +98,7 @@ function renderDues() {
 }
 function setDuesFilter(f) { duesFilter = f; renderDues(); }
 
-/* ── Sidebar / header ───────────────────────────────────── */
+/* ── Activity timeline ──────────────────────────────────── */ const ACTIVITY_LABELS = { txn_add: 'txnAdded', txn_edit: 'txnUpdated', txn_delete: 'txnDeleted', member_add: 'memberAdded', member_edit: 'memberUpdated', member_delete: 'memberDeleted', member_status: 'actStatus', settings_save: 'saved', backup_import: 'backupImported', data_clear: 'dataCleared', demo_load: 'demoLoaded' }; function renderActivity() { const el = $('activityList'); if (!el) return; el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">...</p>'; if (!window.OTWCloudLoadActivity) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; return; } window.OTWCloudLoadActivity(function (items, err) { if (err || !items) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('errGeneric') + '</p>'; return; } el.innerHTML = items.length ? items.map(function (a) { return '<div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">' + '<div class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left"></i></div>' + '<div class="min-w-0 flex-1"><p class="text-sm text-slate-800"><span class="font-semibold">' + esc(t(ACTIVITY_LABELS[a.action] || 'saved')) + '</span> — ' + esc(a.target || '') + (a.details ? ' <span class="text-slate-500">(' + esc(a.details) + ')</span>' : '') + '</p>' + '<p class="text-xs text-slate-400 mt-0.5">' + esc(a.email || '') + ' • ' + esc(a.role || '') + ' • ' + esc(fmtDate((a.at || '').slice(0, 10))) + ' ' + esc((a.at || '').slice(11, 16)) + '</p></div></div>'; }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; }); } /* ── Sidebar / header ───────────────────────────────────── */
 function updateSidebarStats() {
   $('sidebarBalance').textContent = fmtMoney(currentBalance());
   $('sidebarBalanceSub').textContent =
@@ -154,8 +155,7 @@ function saveSettings() {
   db.settings.orgName = $('setOrgName').value.trim() || db.settings.orgName;
   db.settings.orgNameEn = $('setOrgNameEn').value.trim();
   db.settings.orgAddress = $('setOrgAddress').value.trim();
-  db.settings.monthlyFee = Math.max(0, +$('setMonthlyFee').value || 0);
-  saveDB();
+  db.settings.monthlyFee = Math.max(0, +$('setMonthlyFee').value || 0); saveDB(); if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('settings_save', db.settings.orgName || '', fmtMoney(db.settings.monthlyFee));
   applyOrgBranding();
   showToast(t('saved'));
   refreshAll();
@@ -176,7 +176,7 @@ function importBackup(file) {
       saveDB();
       currentLang = db.settings.lang === 'en' ? 'en' : 'bn';
       setLang(currentLang);
-      showToast(t('backupImported'));
+      showToast(t('backupImported')); if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('backup_import', '', parsed.members.length + ' members, ' + parsed.transactions.length + ' entries');
     } catch (err) { showToast(t('backupInvalid'), 'error'); }
   };
   reader.readAsText(file);
@@ -185,15 +185,14 @@ function loadDemoData() {
   confirmAction(t('confirmDemo'), () => {
     const lang = currentLang;
     db = seedData();
-    db.settings.lang = lang;
-    saveDB();
+    db.settings.lang = lang; saveDB(); if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('demo_load', '', '');
     setLang(lang);
     showToast(t('demoLoaded'));
   }, t('yes'));
 }
 function clearAllData() {
   confirmAction(t('confirmClear'), () => {
-    db.members = [];
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('data_clear', '', ''); db.members = [];
     db.transactions = [];
     saveDB();
     refreshAll();
