@@ -80,6 +80,7 @@ const I18N = {
     fStatus: 'অবস্থা',
     cardMemberSince: 'সদস্য পদ',
     cardScan: 'SCAN TO VERIFY',
+  cardTxnHistory: 'লেনদেনের ইতিহাস',
     collected: 'চাঁদা গ্রহণ করা হয়েছে',
 
     /* Finance */
@@ -337,6 +338,7 @@ const I18N = {
     fStatus: 'Status',
     cardMemberSince: 'Member Since',
     cardScan: 'SCAN TO VERIFY',
+  cardTxnHistory: 'Transaction history',
     collected: 'Subscription collected',
 
     cashBook: 'Cash Book (Income & Expense)',
