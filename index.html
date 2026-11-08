@@ -90,7 +90,7 @@ try {
       <button class="nav-item" data-page="finance"><i class="fa-solid fa-book-open w-5 text-center"></i><span data-i18n="navFinance">জমা-খরচ</span></button>
       <button class="nav-item" data-page="scanner"><i class="fa-solid fa-receipt w-5 text-center"></i><span data-i18n="navScanner">রশিদ স্ক্যানার</span></button>
       <button class="nav-item" data-page="reports"><i class="fa-solid fa-chart-pie w-5 text-center"></i><span data-i18n="navReports">আর্থিক প্রতিবেদন</span></button>
-      <button class="nav-item" data-page="settings"><i class="fa-solid fa-gear w-5 text-center"></i><span data-i18n="navSettings">সেটিংস</span></button>
+      <button class="nav-item" data-page="activity"><i class="fa-solid fa-clock-rotate-left w-5 text-center"></i><span data-i18n="navActivity">কার্যকলাপ</span></button> <button class="nav-item" data-page="settings"><i class="fa-solid fa-gear w-5 text-center"></i><span data-i18n="navSettings">সেটিংস</span></button>
       <button class="nav-item" id="navMyProfile" data-page="myprofile" style="display:none"><i class="fa-solid fa-circle-user w-5 text-center"></i><span data-i18n="navMyProfile">আমার প্রোফাইল</span></button>
     </nav>
 
@@ -458,7 +458,7 @@ try {
       </section>
 
       <!-- ─────────── PAGE: SETTINGS ─────────── -->
-      <section id="page-settings" class="page hidden">
+      <section id="page-activity" class="page hidden"><div class="panel"><div class="flex items-center gap-3 mb-5"><button onclick="renderActivity()" class="btn-secondary !py-2"><i class="fa-solid fa-arrows-rotate text-brand-600"></i>রিফ্রেশ</button></div><div id="activityList"></div></div></section><section id="page-settings" class="page hidden">
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
           <div class="panel h-fit">
             <h3 class="panel-title mb-5"><i class="fa-solid fa-building text-brand-600"></i><span data-i18n="orgSettings">সংগঠনের তথ্য</span></h3>
