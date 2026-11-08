@@ -39,10 +39,11 @@ function renderMembers() {
         : '<span class="text-slate-400">—</span>'}</td>
       <td>${m.status === 'active'
         ? `<span class="pill pill-green">${t('statusActive')}</span>`
-        : `<span class="pill pill-gray">${t('statusInactive')}</span>`}</td>
+        : `<span class="pill pill-red">${t('statusInactive')}</span>`}</td>
       <td class="text-right whitespace-nowrap">
         <button class="row-btn bg-brand-50 text-brand-700 hover:bg-brand-100" title="${t('idCardTitle')}" onclick="showIdCard('${m.id}')"><i class="fa-solid fa-id-card"></i></button>
         ${m.status === 'active' && !paid ? `<button class="row-btn bg-gold-100 text-gold-700 hover:bg-gold-200" title="${t('collect')}" onclick="collectSubscription('${m.id}')"><i class="fa-solid fa-hand-holding-dollar"></i></button>` : ''}
+        ${m.status === 'active' ? `<button class="row-btn bg-amber-100 text-amber-700 hover:bg-amber-200" title="${t('deactivateMember')}" onclick="toggleMemberStatus('${m.id}')"><i class="fa-solid fa-user-slash"></i></button>` : `<button class="row-btn bg-green-100 text-green-700 hover:bg-green-200" title="${t('activateMember')}" onclick="toggleMemberStatus('${m.id}')"><i class="fa-solid fa-user-check"></i></button>`}
         <button class="row-btn bg-slate-100 text-slate-600 hover:bg-slate-200" title="${t('editMember')}" onclick="openMemberModal('${m.id}')"><i class="fa-solid fa-pen"></i></button>
         <button class="row-btn bg-rose-50 text-rose-600 hover:bg-rose-100" title="${t('yesDelete')}" onclick="deleteMember('${m.id}')"><i class="fa-solid fa-trash"></i></button>
       </td>
@@ -129,6 +130,24 @@ function deleteMember(id) {
     showToast(t('memberDeleted'));
     refreshAll();
   });
+}
+/* Quick toggle: active <-> inactive */
+function toggleMemberStatus(id) {
+  const m = db.members.find(x => x.id === id);
+  if (!m) return;
+  if (m.status === 'active') {
+    confirmAction(t('confirmDeactivate'), () => {
+      m.status = 'inactive';
+      saveDB();
+      showToast(t('memberDeactivated'));
+      refreshAll();
+    });
+  } else {
+    m.status = 'active';
+    saveDB();
+    showToast(t('memberActivated'));
+    refreshAll();
+  }
 }
 
 /* Quick-collect this month's subscription */
