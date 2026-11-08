@@ -48,6 +48,41 @@ function monthFullLabel(key) { // '2026-11' → 'নভেম্বর ২০২
     .toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-US', { month: 'long', year: 'numeric' });
 }
 
+/* Per-member monthly subscription (100/200/500). Explicit value wins;
+   otherwise derive from the member's latest subscription payment,
+   else fall back to 200. */
+function memberMonthlyFee(m) {
+  if (!m) return 200;
+  if (+m.monthlyFee) return +m.monthlyFee;
+  const subs = (typeof db !== 'undefined' && db && Array.isArray(db.transactions))
+    ? db.transactions.filter(x => x.memberId === m.id && x.category === 'subscription' && x.type === 'income') : [];
+  if (!subs.length) return 200;
+  const latest = subs.slice().sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+  const amt = +latest.amount || 0;
+  if (amt <= 150) return 100;
+  if (amt <= 300) return 200;
+  return 500;
+}
+
+/* Due = unpaid months × monthly fee. Never-paid members count from Sep 2026 (first collection month); paid-in-advance members owe 0. */
+function memberDue(m) {
+  if (!m || m.status === 'inactive') return 0;
+  const fee = memberMonthlyFee(m);
+  const mk = currentMonthKey();
+  let start;
+  if (m.lastPaid) {
+    const [y, mo] = m.lastPaid.split('-').map(Number);
+    const d = new Date(y, mo, 1); // month after lastPaid
+    start = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  } else {
+    start = '2026-09';
+  }
+  if (start > mk) return 0;
+  const [sy, sm] = start.split('-').map(Number);
+  const [cy, cm] = mk.split('-').map(Number);
+  return ((cy - sy) * 12 + (cm - sm) + 1) * fee;
+}
+
 /* Misc */
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function esc(s) {
