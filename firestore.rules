@@ -62,7 +62,7 @@ service cloud.firestore {
     }
 
     match /member_profiles/{mid} {
-      allow read: if signedIn() && myRole() == 'member' && myMemberId() == mid;
+      allow read: if signedIn() && (myRole() == 'member' || myRole() == 'admin' || myRole() == 'treasurer') && myMemberId() == mid;
       allow create, update, delete: if canWrite();
     }
   }
