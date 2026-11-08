@@ -185,6 +185,7 @@ function saveTxn(e) {
     db.transactions.push({ id: uid(), createdAt: Date.now(), ...data });
     showToast(t('txnAdded'));
   }
+  if (window.OTWCloudLogActivity) window.OTWCloudLogActivity(editId ? 'txn_edit' : 'txn_add', desc, fmtMoney(data.amount) + ' • ' + data.date);
   recomputeAllLastPaid();
   saveDB();
   closeModal('txnModal');
@@ -192,9 +193,11 @@ function saveTxn(e) {
 }
 
 function deleteTxn(id) {
+  const tx = db.transactions.find(x => x.id === id);
   confirmAction(t('confirmDelete'), () => {
+    if (window.OTWCloudLogActivity && tx) window.OTWCloudLogActivity('txn_delete', tx.description || '', fmtMoney(tx.amount) + ' • ' + (tx.date || ''));
     db.transactions = db.transactions.filter(x => x.id !== id);
-    recomputeAllLastPaid();
+  recomputeAllLastPaid();
     saveDB();
     showToast(t('txnDeleted'));
     refreshAll();
