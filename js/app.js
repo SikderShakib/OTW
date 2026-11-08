@@ -6,7 +6,8 @@
 let currentPage = 'dashboard';
 const PAGE_TITLES = {
   dashboard: 'navDashboard', members: 'navMembers', finance: 'cashBook',
-  scanner: 'navScanner', reports: 'navReports', settings: 'navSettings'
+  scanner: 'navScanner', reports: 'navReports', settings: 'navSettings',
+  myprofile: 'myProfile'
 };
 
 /* ── Router ─────────────────────────────────────────────── */
@@ -27,6 +28,7 @@ function renderCurrentPage() {
   else if (currentPage === 'finance') renderFinance();
   else if (currentPage === 'reports') renderReports();
   else if (currentPage === 'settings') fillSettings();
+  else if (currentPage === 'myprofile' && window.OTWCloud && window.OTWCloud.rerenderMember) window.OTWCloud.rerenderMember();
 }
 function refreshAll() { updateSidebarStats(); renderCurrentPage(); }
 
