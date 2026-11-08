@@ -61,6 +61,7 @@ function openMemberModal(id) {
   memberPhotoData = '';
   $('mPhotoPreview').innerHTML = '<i class="fa-solid fa-user text-slate-300"></i>';
   $('mDesignation').innerHTML = ROLES.map(r => `<option value="${r}">${roleName(r)}</option>`).join('');
+  $('mMonthlyFee').innerHTML = [100, 200, 500].map(v => `<option value="${v}">${fmtMoney(v)}</option>`).join('');
 
   if (id) {
     const m = db.members.find(x => x.id === id);
@@ -70,6 +71,7 @@ function openMemberModal(id) {
     $('mName').value = m.name;
     $('mMemberId').value = m.memberId;
     $('mDesignation').value = m.designation;
+    $('mMonthlyFee').value = String(memberMonthlyFee(m));
     $('mPhone').value = m.phone;
     $('mEmail').value = m.email || '';
     $('mBlood').value = m.blood || '';
@@ -84,6 +86,7 @@ function openMemberModal(id) {
     $('mMemberId').value = nextMemberCode();
     $('mJoinDate').value = todayISO();
     $('mDesignation').value = 'member';
+    $('mMonthlyFee').value = '200';
   }
   openModal('memberModal');
 }
@@ -102,6 +105,7 @@ function saveMember(e) {
     name: $('mName').value.trim(),
     memberId,
     designation: $('mDesignation').value,
+    monthlyFee: +$('mMonthlyFee').value || 200,
     phone: $('mPhone').value.trim(),
     email: $('mEmail').value.trim(),
     blood: $('mBlood').value,
