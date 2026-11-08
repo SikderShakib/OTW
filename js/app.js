@@ -37,7 +37,6 @@ function renderDashboard() {
   const inc = totalIncome(), exp = totalExpense(), bal = inc - exp;
   const mt = monthTotals(currentMonthKey());
   const pend = pendingMembers();
-  const fee = +db.settings.monthlyFee || 0;
 
   $('statIncome').textContent = fmtMoney(inc);
   $('statIncomeSub').textContent = `${t('thisMonth')}: ${fmtMoney(mt.income)}`;
@@ -45,7 +44,7 @@ function renderDashboard() {
   $('statExpenseSub').textContent = `${t('thisMonth')}: ${fmtMoney(mt.expense)}`;
   $('statBalance').textContent = fmtMoney(bal);
   $('statBalanceSub').textContent = bal >= 0 ? t('surplus') : t('deficit');
-  $('statPending').textContent = fmtMoney(pend.length * fee);
+  $('statPending').textContent = fmtMoney(pend.reduce((s, m) => s + memberMonthlyFee(m), 0));
   $('statPendingSub').textContent = `${fmtNum(pend.length)} ${t('membersWord')} • ${monthFullLabel(currentMonthKey())}`;
 
   renderDashboardCharts();
