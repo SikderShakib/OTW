@@ -5,7 +5,7 @@
 
 let currentPage = 'dashboard';
 const PAGE_TITLES = {
-  dashboard: 'navDashboard', members: 'navMembers', finance: 'cashBook',
+  dashboard: 'navDashboard', members: 'navMembers', dues: 'navDues', finance: 'cashBook',
   scanner: 'navScanner', reports: 'navReports', settings: 'navSettings',
   myprofile: 'myProfile'
 };
@@ -25,6 +25,7 @@ function showPage(page) {
 function renderCurrentPage() {
   if (currentPage === 'dashboard') renderDashboard();
   else if (currentPage === 'members') renderMembers();
+  else if (currentPage === 'dues') renderDues();
   else if (currentPage === 'finance') renderFinance();
   else if (currentPage === 'reports') renderReports();
   else if (currentPage === 'settings') fillSettings();
@@ -79,6 +80,22 @@ function renderDashboard() {
     </div>`).join('')
     : `<div class="text-center py-8 text-slate-400 text-sm"><i class="fa-solid fa-circle-check text-3xl text-brand-500 block mb-2"></i>${t('noPending')}</div>`;
 }
+
+/* ── Dues page ─────────────────────────────────────────── */
+let duesFilter = 'all';
+function renderDues() {
+  if (!$('duesFilterChips') || !$('duesList')) return;
+  $('duesFilterChips').innerHTML = ['all', 500, 200, 100].map(f => `<button class="ftab${String(f) === String(duesFilter) ? ' active' : ''}" onclick="setDuesFilter('${f}')">${f === 'all' ? t('duesAll') : fmtMoney(f)}</button>`).join('');
+  const pend = pendingMembers();
+  const list = duesFilter === 'all' ? pend : pend.filter(m => memberMonthlyFee(m) === +duesFilter);
+  $('duesCount').textContent = `${fmtNum(list.length)} ${t('membersWord')}`;
+  $('duesList').innerHTML = list.length ? list.map(m => `
+    <div class="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
+      <div class="min-w-0"><p class="font-medium text-slate-800 truncate">${esc(m.name)}</p>
+      <p class="text-xs text-slate-500">${esc(num(m.memberId))}</p></div>
+    </div>`).join('') : `<p class="py-6 text-center text-slate-400 text-sm">${t('noData')}</p>`;
+}
+function setDuesFilter(f) { duesFilter = f; renderDues(); }
 
 /* ── Sidebar / header ───────────────────────────────────── */
 function updateSidebarStats() {
