@@ -68,7 +68,21 @@
       .then(function () { showToast(t('saved')); })
       .catch(function (e) { console.warn(e); showToast(t('errGeneric'), 'error'); });
   };
-  window.OTWCloudSyncMembers = function () { syncMemberProfiles(true); };
+  window.OTWCloudLogActivity = function (action, target, details) {
+  if (!store || !currentUser) return;
+  store.collection('activity_log').add({
+    at: new Date().toISOString(), uid: currentUser.uid,
+    email: currentUser.email || '', role: myRole || '',
+    action: action || '', target: target || '', details: details || ''
+  }).catch(function () {});
+};
+window.OTWCloudLoadActivity = function (cb) {
+  if (!store) return cb(null, true);
+  store.collection('activity_log').orderBy('at', 'desc').limit(100).get()
+    .then(function (snap) { cb(snap.docs.map(function (d) { return d.data(); }), null); })
+    .catch(function () { cb(null, true); });
+};
+window.OTWCloudSyncMembers = function () { syncMemberProfiles(true); };
 
   /* ── Boot ─────────────────────────────────────────────── */
   var cfg = getCfg();
