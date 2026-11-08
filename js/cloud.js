@@ -22,7 +22,8 @@
   var SDK_VERSION = '10.12.2';
 
   var auth = null, store = null;
-  var currentUser = null, myRole = null, started = false;
+  var currentUser = null, myRole = null, myMemberId = null, started = false;
+  var currentMemberProfile = null, unsubMemberProfile = null;
   var pushTimer = null, applyingRemote = false;
   var lastPushStamp = '', lastSeenStamp = '', firstSnapshot = true;
   var unsubData = null, unsubRoles = null, unsubOwnRole = null;
@@ -50,6 +51,7 @@
     schedulePush: schedulePush,
     renderSettingsCard: renderSettingsCard,
     refreshUI: refreshUI,
+    rerenderMember: function () { renderMemberProfile(currentMemberProfile, currentMemberProfile ? 'ok' : (myMemberId ? 'notready' : 'nolink')); },
     saveLocalConfig: saveLocalConfig,
     signOut: doSignOut,
     getRole: function () { return myRole; }
@@ -60,6 +62,13 @@
       .then(function () { showToast(t('saved')); })
       .catch(function (e) { console.warn(e); showToast(t('errGeneric'), 'error'); });
   };
+  window.OTWCloudSetMemberLink = function (uid, memberId) {
+    if (!store || myRole !== 'admin') return;
+    store.collection('roles').doc(uid).update({ memberId: memberId || '' })
+      .then(function () { showToast(t('saved')); })
+      .catch(function (e) { console.warn(e); showToast(t('errGeneric'), 'error'); });
+  };
+  window.OTWCloudSyncMembers = function () { syncMemberProfiles(true); };
 
   /* ── Boot ─────────────────────────────────────────────── */
   var cfg = getCfg();
@@ -144,6 +153,7 @@
       })
       .then(function (snap) {
         myRole = (snap && snap.exists && snap.data().role) || 'pending';
+        myMemberId = (snap && snap.exists && snap.data().memberId) || null;
         watchOwnRole(ref);
         if (myRole === 'pending') showPending();
         else enterApp();
@@ -159,9 +169,13 @@
     unsubOwnRole = ref.onSnapshot(function (snap) {
       if (!snap.exists) return;
       var r = snap.data().role;
-      if (!r || r === myRole) return;
-      if (myRole === 'pending' && r !== 'pending') { myRole = r; enterApp(); }
-      else if (started) location.reload(); // role changed mid-session → re-apply guards cleanly
+      var mid = snap.data().memberId || null;
+      if (r && r !== myRole) {
+        if (myRole === 'pending' && r !== 'pending') { myRole = r; myMemberId = mid; enterApp(); }
+        else if (started) location.reload(); // role changed mid-session → re-apply guards cleanly
+        return;
+      }
+      if (mid !== myMemberId && started) location.reload(); // member link changed → re-apply cleanly
     }, function () {});
   }
 
@@ -170,11 +184,61 @@
     started = true;
     firstSnapshot = true;
     renderHeaderChip();
+    if (myRole === 'member') { enterMemberMode(); return; }
     setSyncState('synced');
     if (myRole === 'viewer') applyReadOnly();
     startDataSync();
     if (myRole === 'admin') startRolesWatch();
     renderSettingsCard();
+  }
+
+  /* ── Member self-service: own profile only ─────────────── */
+  function enterMemberMode() {
+    document.body.classList.add('member-mode');
+    if (!myMemberId) { renderMemberProfile(null, 'nolink'); showPage('myprofile'); return; }
+    setSyncState('synced');
+    if (unsubMemberProfile) unsubMemberProfile();
+    unsubMemberProfile = store.collection('member_profiles').doc(myMemberId)
+      .onSnapshot(function (snap) {
+        if (!snap.exists) { renderMemberProfile(null, 'notready'); }
+        else { currentMemberProfile = snap.data() || null; renderMemberProfile(currentMemberProfile, 'ok'); }
+        showPage('myprofile');
+      }, function () { renderMemberProfile(null, 'notready'); showPage('myprofile'); });
+  }
+
+  function renderMemberProfile(p, state) {
+    var body = $('myProfileBody');
+    if (!body) return;
+    if (state === 'nolink') {
+      body.innerHTML = '<div class="text-center py-10 text-slate-500 text-sm"><i class="fa-solid fa-link-slash text-3xl text-slate-300 block mb-3"></i>' + esc(t('memberLinkPending')) + '</div>';
+      return;
+    }
+    if (state !== 'ok' || !p) {
+      body.innerHTML = '<div class="text-center py-10 text-slate-500 text-sm"><i class="fa-solid fa-hourglass-half text-3xl text-slate-300 block mb-3"></i>' + esc(t('memberProfileNotReady')) + '</div>';
+      return;
+    }
+    var txns = (p.txns || []).slice().sort(function (a, b) { return a.date === b.date ? 0 : (a.date < b.date ? 1 : -1); });
+    var income = txns.filter(function (x) { return x.type === 'income'; });
+    var mk = currentMonthKey();
+    var thisMonth = income.filter(function (x) { return (x.date || '').slice(0, 7) === mk; })
+      .reduce(function (s, x) { return s + (+x.amount || 0); }, 0);
+    body.innerHTML =
+      '<div class="flex items-center gap-4 mb-5">'
+      + '<div class="w-16 h-16 rounded-full bg-brand-700 text-white flex items-center justify-center text-2xl font-bold shrink-0">' + esc((p.name || '?').trim().charAt(0)) + '</div>'
+      + '<div class="min-w-0"><p class="text-lg font-bold text-slate-800 truncate">' + esc(p.name || '') + '</p>'
+      + '<p class="text-sm text-slate-500">' + esc(p.memberId || '') + ' • ' + esc(roleName(p.designation || 'member')) + '</p>'
+      + '<p class="text-xs mt-1"><span class="pill ' + (p.status === 'active' ? 'pill-green' : 'pill-red') + '">' + (p.status === 'active' ? t('statusActive') : t('statusInactive')) + '</span></p></div></div>'
+      + '<div class="grid grid-cols-3 gap-3 mb-5">'
+      + '<div class="rounded-xl bg-brand-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myTotalPaid') + '</p><p class="font-bold text-brand-800">' + fmtMoney(+p.totalPaid || 0) + '</p></div>'
+      + '<div class="rounded-xl bg-emerald-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myThisMonth') + '</p><p class="font-bold text-emerald-700">' + fmtMoney(thisMonth) + '</p></div>'
+      + '<div class="rounded-xl bg-amber-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myLastPaid') + '</p><p class="font-bold text-amber-700">' + esc(p.lastPaid ? monthFullLabel(p.lastPaid) : '—') + '</p></div></div>'
+      + '<p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">' + t('myPayments') + '</p>'
+      + (txns.length ? txns.map(function (x) {
+          return '<div class="flex items-center gap-2 py-2 text-sm border-t border-slate-100">'
+            + '<span class="text-slate-400 text-xs whitespace-nowrap">' + fmtDate(x.date) + '</span>'
+            + '<span class="flex-1 truncate text-slate-700">' + esc(x.description || catName(x.category)) + '</span>'
+            + '<span class="font-semibold whitespace-nowrap ' + (x.type === 'income' ? 'text-emerald-700' : 'text-rose-600') + '">' + (x.type === 'income' ? '+' : '−') + fmtMoney(x.amount) + '</span></div>';
+        }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('myNoPayments') + '</p>');
   }
 
   function doSignOut() {
@@ -289,7 +353,7 @@
       members: db.members,
       transactions: db.transactions,
       _meta: { updatedAt: stamp, updatedBy: currentUser.uid, updatedByEmail: currentUser.email || '' }
-    }).then(function () { setSyncState('synced'); })
+    }).then(function () { setSyncState('synced'); syncMemberProfiles(false); })
       .catch(function (err) { console.warn('[OTW Cloud] push failed', err); setSyncState('error'); });
   }
 
@@ -297,6 +361,7 @@
     if (unsubData) { unsubData(); unsubData = null; }
     if (unsubRoles) { unsubRoles(); unsubRoles = null; }
     if (unsubOwnRole) { unsubOwnRole(); unsubOwnRole = null; }
+    if (unsubMemberProfile) { unsubMemberProfile(); unsubMemberProfile = null; }
   }
 
   /* ── Roles / team management (admin) ──────────────────── */
@@ -311,11 +376,36 @@
   }
 
   function roleLabel(r) { return t('urole_' + (r || 'pending')); }
+  /* Sync linked members' own-profile docs from the main data.
+     Runs automatically after every successful admin/treasurer push,
+     and manually from Settings -> Team Access. */
+  function syncMemberProfiles(manual) {
+    if (!store || !canWrite() || !db || !Array.isArray(db.members)) return;
+    var linked = (rolesList || []).filter(function (u) { return u.role === 'member' && u.memberId; });
+    if (!linked.length) { if (manual) showToast(t('memberProfilesSynced')); return; }
+    var done = 0, total = linked.length;
+    linked.forEach(function (u) {
+      var m = db.members.find(function (x) { return x.id === u.memberId; });
+      if (!m) { done++; if (done === total && manual) showToast(t('memberProfilesSynced')); return; }
+      var txns = (db.transactions || []).filter(function (x) { return x.memberId === m.id; })
+        .sort(function (a, b) { return a.date === b.date ? ((b.createdAt || 0) - (a.createdAt || 0)) : (a.date < b.date ? 1 : -1); })
+        .slice(0, 50)
+        .map(function (x) { return { date: x.date || '', amount: +x.amount || 0, type: x.type || 'income', category: x.category || '', description: x.description || '' }; });
+      var totalPaid = txns.filter(function (x) { return x.type === 'income'; })
+        .reduce(function (s, x) { return s + (+x.amount || 0); }, 0);
+      store.collection('member_profiles').doc(m.id).set({
+        uid: u.uid, memberId: m.memberId || '', name: m.name || '', designation: m.designation || 'member',
+        phone: m.phone || '', status: m.status || 'active', totalPaid: totalPaid, lastPaid: m.lastPaid || null, txns: txns,
+        updatedAt: new Date().toISOString()
+      }).then(function () { done++; if (done === total && manual) showToast(t('memberProfilesSynced')); })
+        .catch(function (e) { console.warn('[OTW Cloud] member sync failed', e); done++; if (done === total && manual) showToast(t('errGeneric'), 'error'); });
+    });
+  }
 
   function renderTeamRows() {
     var tb = $('teamTableBody');
     if (!tb) return;
-    var opts = ['pending', 'viewer', 'treasurer', 'admin'];
+    var opts = ['pending', 'viewer', 'treasurer', 'admin', 'member'];
     tb.innerHTML = rolesList.map(function (u) {
       var isSelf = currentUser && u.uid === currentUser.uid;
       var sel = '<select class="input !w-40 !py-1.5" ' + (isSelf ? 'disabled title="' + esc(t('youLabel')) + '"' : '')
@@ -323,10 +413,19 @@
         + opts.map(function (o) {
             return '<option value="' + o + '"' + (u.role === o ? ' selected' : '') + '>' + roleLabel(o) + '</option>';
           }).join('') + '</select>';
+      var linkCell = '<span class="text-slate-300">—</span>';
+      if (u.role === 'member') {
+        var mems = (typeof db !== 'undefined' && db && Array.isArray(db.members)) ? db.members : [];
+        linkCell = '<select class="input !w-52 !py-1.5" onchange="OTWCloudSetMemberLink(\'' + u.uid + '\', this.value)">'
+          + '<option value="">' + esc(t('noMemberLinked')) + '</option>'
+          + mems.map(function (m) {
+              return '<option value="' + m.id + '"' + (u.memberId === m.id ? ' selected' : '') + '>' + esc(m.name) + ' (' + esc(m.memberId || '') + ')</option>';
+            }).join('') + '</select>';
+      }
       return '<tr><td class="font-medium">' + esc(u.email || u.uid)
         + (isSelf ? ' <span class="pill pill-green">' + t('youLabel') + '</span>' : '')
-        + '</td><td>' + sel + '</td></tr>';
-    }).join('') || '<tr><td colspan="2" class="text-center text-slate-400 py-6">' + t('noData') + '</td></tr>';
+        + '</td><td>' + sel + '</td><td>' + linkCell + '</td></tr>';
+    }).join('') || '<tr><td colspan="3" class="text-center text-slate-400 py-6">' + t('noData') + '</td></tr>';
   }
 
   /* ── Viewer read-only enforcement (UI layer; rules enforce server-side) ── */
@@ -409,9 +508,11 @@
     if (myRole === 'admin') {
       html += '<h4 class="font-bold text-slate-700 mb-1 flex items-center gap-2"><i class="fa-solid fa-users-gear text-brand-600"></i>' + t('teamAccess') + '</h4>'
         + '<p class="text-xs text-slate-500 mb-3">' + t('teamHint') + '</p>'
-        + '<div class="overflow-x-auto"><table class="w-full min-w-[420px] text-sm"><thead><tr class="text-left text-slate-500 border-b border-slate-200">'
-        + '<th class="th">' + t('fEmail') + '</th><th class="th">' + t('uroleLabel') + '</th></tr></thead>'
+        + '<p class="text-xs text-slate-500 mb-3">' + t('linkMemberHint') + '</p>'
+        + '<div class="overflow-x-auto"><table class="w-full min-w-[560px] text-sm"><thead><tr class="text-left text-slate-500 border-b border-slate-200">'
+        + '<th class="th">' + t('fEmail') + '</th><th class="th">' + t('uroleLabel') + '</th><th class="th">' + t('linkMember') + '</th></tr></thead>'
         + '<tbody id="teamTableBody"></tbody></table></div>';
+        + '<button onclick="OTWCloudSyncMembers()" class="btn-secondary mt-4"><i class="fa-solid fa-arrows-rotate text-brand-600"></i>' + t('syncMemberProfiles') + '</button>';
     }
     body.innerHTML = html;
     if (myRole === 'admin') renderTeamRows();
