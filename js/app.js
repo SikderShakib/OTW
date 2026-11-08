@@ -114,21 +114,36 @@ function renderNotices() {
         </div>
       </form>`;
   }
-  listEl.innerHTML = notices.length ? notices.map(n => `
-    <div class="py-3 border-b border-slate-100 last:border-0">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <p class="font-semibold text-slate-800">${esc(n.title)}</p>
-          <p class="text-xs text-slate-400 mt-0.5">${fmtDate(n.date)}</p>
-          ${n.body ? `<p class="text-sm text-slate-600 mt-1 whitespace-pre-line">${esc(n.body)}</p>` : ''}
-        </div>
-        <div class="flex gap-1 shrink-0">
-          <button class="icon-btn" onclick="editNotice('${n.id}')"><i class="fa-solid fa-pen"></i></button>
-          <button class="icon-btn" onclick="deleteNotice('${n.id}')"><i class="fa-solid fa-trash text-rose-500"></i></button>
-        </div>
-      </div>
-    </div>`).join('') : `<p class="py-6 text-center text-slate-400 text-sm">${t('noNotices')}</p>`;
+    if (!notices.length) {
+         listEl.innerHTML = `<p class="py-6 text-center text-slate-400 text-sm">${t('noNotices')}</p>`;
+       return;
+    }
+   const [top, ...rest] = notices;
+   const editBtns = (n) => `
+     <div class="flex gap-1 shrink-0">
+       <button class="icon-btn" onclick="editNotice('${n.id}')"><i class="fa-solid fa-pen"></i></button>
+       <button class="icon-btn" onclick="deleteNotice('${n.id}')"><i class="fa-solid fa-trash text-rose-500"></i></button>
+   </div>`;listEl.innerHTML = `
+     <article class="rounded-2xl border-l-4 border-rose-600 bg-rose-50/50 px-4 py-4 mb-2">
+       <div class="flex items-center gap-2 mb-2">
+         <span class="text-[11px] font-bold uppercase tracking-wide bg-rose-600 text-white rounded px-2 py-0.5">${esc(t('latestBadge'))}</span>
+         <span class="text-xs text-slate-400">${fmtDate(top.date)}</span>
+         <span class="ml-auto">${editBtns(top)}</span>
+   </div>
+     <h4 class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">${esc(top.title)}</h4>
+     ${top.body ? `<p class="text-sm sm:text-base text-slate-700 mt-2 whitespace-pre-line">${esc(top.body)}</p>` : ''}
+</article>
+${rest.map(n => `
+  <div class="flex items-start gap-3 py-3 border-t border-slate-100">
+    <span class="mt-2 w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+    <div class="min-w-0 flex-1">
+      <p class="font-bold text-slate-800 leading-snug">${esc(n.title)}</p>
+      <p class="text-xs text-slate-400 mt-0.5">${fmtDate(n.date)}</p>
+      ${n.body ? `<p class="text-sm text-slate-600 mt-1 whitespace-pre-line">${esc(n.body)}</p>` : ''}
+</div>
+${editBtns(n)} </div>`).join('')}`;
 }
+
 function saveNotice(e) {
   e.preventDefault();
   const title = $('nTitle').value.trim();
