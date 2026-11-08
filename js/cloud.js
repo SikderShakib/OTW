@@ -264,7 +264,12 @@ function renderMemberProfile(p, state) {
             + '<span class="text-slate-400 text-xs whitespace-nowrap">' + fmtDate(x.date) + '</span>'
             + '<span class="flex-1 truncate text-slate-700">' + esc(x.description || catName(x.category)) + '</span>'
             + '<span class="font-semibold whitespace-nowrap ' + (x.type === 'income' ? 'text-emerald-700' : 'text-rose-600') + '">' + (x.type === 'income' ? '+' : '−') + fmtMoney(x.amount) + '</span></div>';
-        }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('myNoPayments') + '</p>');
+        }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('myNoPayments') + '</p>') + '<p class="text-xs font-bold text-slate-500 uppercase tracking-wide mt-6 mb-2">' + t('noticesTitle') + '</p>'
+  + ((p.notices || []).length ? (p.notices || []).map(function (n) {
+    return '<div class="py-2 border-t border-slate-100"><p class="text-sm font-semibold text-slate-800">' + esc(n.title || '') + '</p>'
+    + '<p class="text-xs text-slate-400">' + esc(fmtDate(n.date || '')) + '</p>'
+    + (n.body ? '<p class="text-sm text-slate-600 mt-1 whitespace-pre-line">' + esc(n.body) + '</p>' : '') + '</div>';
+  }).join('') : '<p class="py-4 text-center text-slate-400 text-sm">' + t('noNotices') + '</p>');
   }
 
   function doSignOut() {
@@ -422,7 +427,8 @@ function renderMemberProfile(p, state) {
       store.collection('member_profiles').doc(m.id).set({
         uid: u.uid, memberId: m.memberId || '', name: m.name || '', designation: m.designation || 'member',
         phone: m.phone || '', status: m.status || 'active', totalPaid: totalPaid, lastPaid: m.lastPaid || null, monthlyFee: memberMonthlyFee(m), due: memberDue(m), txns: txns,
-        updatedAt: new Date().toISOString()
+        notices: (db.notices || []).slice(0, 10).map(function (n) { return { title: n.title || '', body: n.body || '', date: n.date || '' }; }),
+      updatedAt: new Date().toISOString()
       }).then(function () { done++; if (done === total && manual) showToast(t('memberProfilesSynced')); })
         .catch(function (e) { console.warn('[OTW Cloud] member sync failed', e); done++; if (done === total && manual) showToast(t('errGeneric'), 'error'); });
     });
@@ -460,7 +466,7 @@ function renderMemberProfile(p, state) {
     wrappedReadOnly = true;
     document.body.classList.add('viewer-mode');
     ['openMemberModal', 'saveMember', 'deleteMember', 'collectSubscription',
-     'openTxnModal', 'saveTxn', 'deleteTxn', 'addScannedExpense',
+     'openTxnModal', 'saveTxn', 'deleteTxn', 'saveNotice', 'deleteNotice', 'addScannedExpense',
      'saveSettings', 'loadDemoData', 'clearAllData', 'importBackup'].forEach(function (name) {
       if (typeof window[name] === 'function') {
         window[name] = function () { showToast(t('viewerReadonly'), 'error'); };
