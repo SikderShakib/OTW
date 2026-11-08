@@ -43,6 +43,7 @@ const I18N = {
   noticeUpdated: 'নোটিশ আপডেট হয়েছে',
   noticeDeleted: 'নোটিশ মুছে ফেলা হয়েছে',
   noNotices: 'কোনো নোটিশ নেই',
+     latestBadge: 'সর্বশেষ',
     surplus: 'উদ্বৃত্ত অবস্থায় আছে',
     deficit: 'ঘাটতি অবস্থায় আছে',
 
@@ -331,6 +332,7 @@ const I18N = {
   noticeUpdated: 'Notice updated',
   noticeDeleted: 'Notice deleted',
   noNotices: 'No notices yet',
+     latestBadge: 'Latest',
     surplus: 'In surplus',
     deficit: 'In deficit',
 
