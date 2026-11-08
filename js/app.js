@@ -75,7 +75,7 @@ function renderDashboard() {
       ${avatarHTML(m)}
       <div class="min-w-0 flex-1">
         <p class="font-semibold text-sm text-slate-800 truncate">${esc(m.name)}</p>
-        <p class="text-xs text-slate-500">${esc(num(m.memberId))} • ${fmtMoney(fee)}</p>
+        <p class="text-xs text-slate-500">${esc(num(m.memberId))}</p>
       </div>
     </div>`).join('')
     : `<div class="text-center py-8 text-slate-400 text-sm"><i class="fa-solid fa-circle-check text-3xl text-brand-500 block mb-2"></i>${t('noPending')}</div>`;
