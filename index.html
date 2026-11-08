@@ -86,6 +86,7 @@ try {
     <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-1.5 sidebar-scroll">
       <button class="nav-item" data-page="dashboard"><i class="fa-solid fa-gauge-high w-5 text-center"></i><span data-i18n="navDashboard">ড্যাশবোর্ড</span></button>
       <button class="nav-item" data-page="members"><i class="fa-solid fa-users w-5 text-center"></i><span data-i18n="navMembers">সদস্যবৃন্দ</span><span id="navMemberCount" class="ml-auto text-xs bg-white/15 rounded-full px-2 py-0.5"></span></button>
+      <button class="nav-item" data-page="dues"><i class="fa-solid fa-hand-holding-dollar w-5 text-center"></i><span data-i18n="navDues">বকেয়া তালিকা</span></button>
       <button class="nav-item" data-page="finance"><i class="fa-solid fa-book-open w-5 text-center"></i><span data-i18n="navFinance">জমা-খরচ</span></button>
       <button class="nav-item" data-page="scanner"><i class="fa-solid fa-receipt w-5 text-center"></i><span data-i18n="navScanner">রশিদ স্ক্যানার</span></button>
       <button class="nav-item" data-page="reports"><i class="fa-solid fa-chart-pie w-5 text-center"></i><span data-i18n="navReports">আর্থিক প্রতিবেদন</span></button>
@@ -261,7 +262,14 @@ try {
       </section>
 
       <!-- ─────────── PAGE: FINANCE / CASH BOOK ─────────── -->
-      <section id="page-finance" class="page hidden">
+      <section id="page-dues" class="page hidden">
+      <div class="panel">
+        <div class="flex flex-wrap items-center gap-2 mb-4" id="duesFilterChips"></div>
+        <p class="text-sm text-slate-500 mb-3"><span id="duesCount"></span></p>
+        <div id="duesList"></div>
+      </div>
+    </section>
+    <section id="page-finance" class="page hidden">
         <!-- Summary strip -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-5">
           <div class="rounded-2xl p-5 text-white shadow-soft" style="background:linear-gradient(135deg,#065f46,#022c22)">
@@ -534,7 +542,7 @@ try {
         <div><label class="label"><span data-i18n="fName">পূর্ণ নাম</span> *</label><input id="mName" type="text" class="input" required></div>
         <div><label class="label" data-i18n="fMemberId">সদস্য আইডি</label><input id="mMemberId" type="text" class="input" placeholder="OTW-001"></div>
         <div><label class="label" data-i18n="fDesignation">পদবী</label><select id="mDesignation" class="input"></select></div>
-        <div><label class="label" data-i18n="fMonthlyFee">মাসিক চাঁদা</label><input id="mMonthlyFee" type="number" min="0" step="1" class="input" placeholder="200"></div>
+        <div><label class="label" data-i18n="fMemberFee">মাসিক চাঁদা</label><input id="mMonthlyFee" type="number" min="0" step="1" class="input" placeholder="200"></div>
         <div><label class="label"><span data-i18n="fPhone">ফোন নম্বর</span> *</label><input id="mPhone" type="tel" class="input" placeholder="01XXXXXXXXX" required></div>
         <div><label class="label" data-i18n="fEmail">ইমেইল</label><input id="mEmail" type="email" class="input" placeholder="example@mail.com"></div>
         <div><label class="label" data-i18n="fBlood">রক্তের গ্রুপ</label>
