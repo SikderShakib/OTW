@@ -185,6 +185,11 @@
     firstSnapshot = true;
     renderHeaderChip();
     if (myRole === 'member') { enterMemberMode(); return; }
+  if ((myRole === 'admin' || myRole === 'treasurer') && myMemberId) {
+    var navBtn = $('navMyProfile');
+    if (navBtn) navBtn.style.display = '';
+    subscribeOwnProfile(false);
+  }
     setSyncState('synced');
     if (myRole === 'viewer') applyReadOnly();
     startDataSync();
@@ -197,16 +202,21 @@
     document.body.classList.add('member-mode');
     if (!myMemberId) { renderMemberProfile(null, 'nolink'); showPage('myprofile'); return; }
     setSyncState('synced');
-    if (unsubMemberProfile) unsubMemberProfile();
-    unsubMemberProfile = store.collection('member_profiles').doc(myMemberId)
-      .onSnapshot(function (snap) {
-        if (!snap.exists) { renderMemberProfile(null, 'notready'); }
-        else { currentMemberProfile = snap.data() || null; renderMemberProfile(currentMemberProfile, 'ok'); }
-        showPage('myprofile');
-      }, function () { renderMemberProfile(null, 'notready'); showPage('myprofile'); });
+    subscribeOwnProfile(true);
   }
 
-  function renderMemberProfile(p, state) {
+  /* Shared: subscribe to the linked member_profiles doc. When showProfilePage is false, the app stays on the current page (admin/treasurer) instead of opening the profile. */
+function subscribeOwnProfile(showProfilePage) {
+  if (unsubMemberProfile) unsubMemberProfile();
+  unsubMemberProfile = store.collection('member_profiles').doc(myMemberId)
+    .onSnapshot(function (snap) {
+      if (!snap.exists) { renderMemberProfile(null, 'notready'); }
+      else { currentMemberProfile = snap.data() || null; renderMemberProfile(currentMemberProfile, 'ok'); }
+      if (showProfilePage) showPage('myprofile');
+    }, function () { renderMemberProfile(null, 'notready'); if (showProfilePage) showPage('myprofile'); });
+}
+
+function renderMemberProfile(p, state) {
     var body = $('myProfileBody');
     if (!body) return;
     if (state === 'nolink') {
@@ -228,10 +238,12 @@
       + '<div class="min-w-0"><p class="text-lg font-bold text-slate-800 truncate">' + esc(p.name || '') + '</p>'
       + '<p class="text-sm text-slate-500">' + esc(p.memberId || '') + ' • ' + esc(roleName(p.designation || 'member')) + '</p>'
       + '<p class="text-xs mt-1"><span class="pill ' + (p.status === 'active' ? 'pill-green' : 'pill-red') + '">' + (p.status === 'active' ? t('statusActive') : t('statusInactive')) + '</span></p></div></div>'
-      + '<div class="grid grid-cols-3 gap-3 mb-5">'
+      + '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">'
       + '<div class="rounded-xl bg-brand-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myTotalPaid') + '</p><p class="font-bold text-brand-800">' + fmtMoney(+p.totalPaid || 0) + '</p></div>'
       + '<div class="rounded-xl bg-emerald-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myThisMonth') + '</p><p class="font-bold text-emerald-700">' + fmtMoney(thisMonth) + '</p></div>'
-      + '<div class="rounded-xl bg-amber-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myLastPaid') + '</p><p class="font-bold text-amber-700">' + esc(p.lastPaid ? monthFullLabel(p.lastPaid) : '—') + '</p></div></div>'
+      + '<div class="rounded-xl bg-amber-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myLastPaid') + '</p><p class="font-bold text-amber-700">' + esc(p.lastPaid ? monthFullLabel(p.lastPaid) : '—') + '</p></div>'
+    + '<div class="rounded-xl bg-sky-50 p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myMonthlyFee') + '</p><p class="font-bold text-sky-700">' + fmtMoney(+p.monthlyFee || 0) + '</p></div>'
+    + '<div class="rounded-xl ' + ((+p.due || 0) > 0 ? 'bg-rose-50' : 'bg-slate-50') + ' p-3 text-center"><p class="text-[11px] text-slate-500">' + t('myDue') + '</p><p class="font-bold ' + ((+p.due || 0) > 0 ? 'text-rose-700' : 'text-slate-700') + '">' + fmtMoney(+p.due || 0) + '</p></div></div>'
       + '<p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">' + t('myPayments') + '</p>'
       + (txns.length ? txns.map(function (x) {
           return '<div class="flex items-center gap-2 py-2 text-sm border-t border-slate-100">'
@@ -381,7 +393,7 @@
      and manually from Settings -> Team Access. */
   function syncMemberProfiles(manual) {
     if (!store || !canWrite() || !db || !Array.isArray(db.members)) return;
-    var linked = (rolesList || []).filter(function (u) { return u.role === 'member' && u.memberId; });
+    var linked = (rolesList || []).filter(function (u) { return u.memberId && (u.role === 'member' || u.role === 'admin' || u.role === 'treasurer'); });
     if (!linked.length) { if (manual) showToast(t('memberProfilesSynced')); return; }
     var done = 0, total = linked.length;
     linked.forEach(function (u) {
@@ -395,7 +407,7 @@
         .reduce(function (s, x) { return s + (+x.amount || 0); }, 0);
       store.collection('member_profiles').doc(m.id).set({
         uid: u.uid, memberId: m.memberId || '', name: m.name || '', designation: m.designation || 'member',
-        phone: m.phone || '', status: m.status || 'active', totalPaid: totalPaid, lastPaid: m.lastPaid || null, txns: txns,
+        phone: m.phone || '', status: m.status || 'active', totalPaid: totalPaid, lastPaid: m.lastPaid || null, monthlyFee: memberMonthlyFee(m), due: memberDue(m), txns: txns,
         updatedAt: new Date().toISOString()
       }).then(function () { done++; if (done === total && manual) showToast(t('memberProfilesSynced')); })
         .catch(function (e) { console.warn('[OTW Cloud] member sync failed', e); done++; if (done === total && manual) showToast(t('errGeneric'), 'error'); });
@@ -414,7 +426,7 @@
             return '<option value="' + o + '"' + (u.role === o ? ' selected' : '') + '>' + roleLabel(o) + '</option>';
           }).join('') + '</select>';
       var linkCell = '<span class="text-slate-300">—</span>';
-      if (u.role === 'member') {
+      if (u.role === 'member' || u.role === 'admin' || u.role === 'treasurer') {
         var mems = (typeof db !== 'undefined' && db && Array.isArray(db.members)) ? db.members : [];
         linkCell = '<select class="input !w-52 !py-1.5" onchange="OTWCloudSetMemberLink(\'' + u.uid + '\', this.value)">'
           + '<option value="">' + esc(t('noMemberLinked')) + '</option>'
