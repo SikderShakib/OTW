@@ -112,7 +112,7 @@ try {
           <button id="langBn" class="lang-btn px-3 py-1 rounded-full transition">বাংলা</button>
           <button id="langEn" class="lang-btn px-3 py-1 rounded-full transition">EN</button>
         </div>
-        <button onclick="openTxnModal('income')" class="hidden sm:inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-soft transition">
+        <button id="quickEntryBtn" onclick="openTxnModal('income')" class="hidden sm:inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-soft transition">
           <i class="fa-solid fa-plus"></i><span data-i18n="quickEntry">দ্রুত এন্ট্রি</span>
         </button>
         <!-- Cloud sync status (cloud mode only) -->
@@ -490,6 +490,14 @@ try {
             <button onclick="window.OTWCloud && OTWCloud.saveLocalConfig()" class="btn-primary mt-3"><i class="fa-solid fa-cloud-arrow-up"></i><span data-i18n="connectCloud">ক্লাউডে সংযোগ করুন</span></button>
             <p class="text-xs text-slate-400 mt-3 flex gap-1.5"><i class="fa-solid fa-circle-info mt-0.5"></i><span data-i18n="cloudSetupHint">Firebase প্রজেক্ট তৈরির ধাপে ধাপে নির্দেশনা পেতে রিপোজিটরির CLOUD_SETUP.md ফাইলটি দেখুন।</span></p>
           </div>
+        </div>
+      </section>
+
+      <!-- Member self-service profile (shown only for role "member") -->
+      <section id="page-myprofile" class="page hidden">
+        <div class="panel max-w-2xl mx-auto">
+          <h3 class="panel-title mb-5"><i class="fa-solid fa-id-card text-brand-600"></i><span data-i18n="myProfile">আমার প্রোফাইল</span></h3>
+          <div id="myProfileBody"></div>
         </div>
       </section>
 
