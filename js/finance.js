@@ -3,6 +3,8 @@
    ════════════════════════════════════════════════════════════ */
 
 let finTypeFilter = 'all';
+let finSportsOnly = false;
+
 
 function monthTotals(monthKey) {
   const list = db.transactions.filter(t => monthKeyOf(t.date) === monthKey);
@@ -10,6 +12,7 @@ function monthTotals(monthKey) {
 }
 
 function renderFinance() {
+   ensureSportsChip();
   /* Summary strip */
   $('finBalance').textContent = fmtMoney(currentBalance());
   const mt = monthTotals(currentMonthKey());
@@ -26,6 +29,7 @@ function renderFinance() {
     if (finTypeFilter !== 'all' && tx.type !== finTypeFilter) return false;
     if (cat && tx.category !== cat) return false;
     if (month && monthKeyOf(tx.date) !== month) return false;
+     if (finSportsOnly && !isSportsTxn(tx)) return false;
     if (q && !((tx.description || '').toLowerCase().includes(q) || (tx.vendor || '').toLowerCase().includes(q))) return false;
     return true;
   }).reverse(); // newest first
@@ -63,7 +67,39 @@ function renderFinance() {
   $('finFilteredExpense').textContent = fmtMoney(totalExpense(list));
   $('txnCountLine').textContent = `${fmtNum(list.length)} ${t('entries')}`;
 }
+/* One-click sports quick filter (matches খেলা / ক্রীড়া in description or vendor) */
+function isSportsTxn(tx) {
+   const s = ((tx.description || '') + ' ' + (tx.vendor || '')).toLowerCase();
+   return s.includes('খেলা') || s.includes('ক্রীড়া');
+}
 
+function syncSportsChip() {
+   const btn = document.getElementById('sportsFilterBtn');
+   if (!btn) return;
+   btn.innerHTML = '<i class="fa-solid fa-trophy"></i> ' + t('sportsFilter');
+   btn.className = finSportsOnly
+     ? 'text-xs font-bold px-3 py-1.5 rounded-full bg-brand-700 text-white transition'
+      : 'text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+}
+
+function ensureSportsChip() {
+   let btn = document.getElementById('sportsFilterBtn');
+   if (!btn) {
+      const tabs = document.querySelectorAll('.ftab');
+      if (!tabs.length) return;
+      btn = document.createElement('button');
+      btn.id = 'sportsFilterBtn';
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+         finSportsOnly = !finSportsOnly;
+         syncSportsChip();
+         renderFinance();
+      }
+                           tabs[tabs.length - 1].after(btn);
+   }
+   syncSportsChip();
+}
+   
 /* ── Transaction modal ──────────────────────────────────── */
 function buildTxnCategoryOptions(type) {
   const cats = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
