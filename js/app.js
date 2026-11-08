@@ -80,6 +80,7 @@ function renderDashboard() {
       </div>
     </div>`).join('')
     : `<div class="text-center py-8 text-slate-400 text-sm"><i class="fa-solid fa-circle-check text-3xl text-brand-500 block mb-2"></i>${t('noPending')}</div>`;
+  renderNotices();
 }
 
 /* ── Dues page ─────────────────────────────────────────── */
@@ -96,9 +97,82 @@ function renderDues() {
       <p class="text-xs text-slate-500">${esc(num(m.memberId))}</p></div>
     </div>`).join('') : `<p class="py-6 text-center text-slate-400 text-sm">${t('noData')}</p>`;
 }
+/* ── Notice board ───────────────────────────────────────── */
+let editingNoticeId = null;
+function renderNotices() {
+  const listEl = $('noticesList'), formEl = $('noticeFormWrap');
+  if (!listEl) return;
+  const notices = (db.notices || []).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (formEl) {
+    formEl.innerHTML = `
+      <form onsubmit="saveNotice(event)" class="space-y-3 mb-5">
+        <input id="nTitle" type="text" class="input" placeholder="${esc(t('noticeTitlePh'))}" required>
+        <textarea id="nBody" rows="3" class="input" placeholder="${esc(t('noticeBodyPh'))}"></textarea>
+        <div class="flex items-center gap-2">
+          <button type="submit" class="btn-primary !py-2"><i class="fa-solid fa-plus"></i> ${esc(editingNoticeId ? t('save') : t('addNotice'))}</button>
+          ${editingNoticeId ? `<button type="button" class="btn-secondary !py-2" onclick="cancelNoticeEdit()">${esc(t('cancel'))}</button>` : ''}
+        </div>
+      </form>`;
+  }
+  listEl.innerHTML = notices.length ? notices.map(n => `
+    <div class="py-3 border-b border-slate-100 last:border-0">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-800">${esc(n.title)}</p>
+          <p class="text-xs text-slate-400 mt-0.5">${fmtDate(n.date)}</p>
+          ${n.body ? `<p class="text-sm text-slate-600 mt-1 whitespace-pre-line">${esc(n.body)}</p>` : ''}
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button class="icon-btn" onclick="editNotice('${n.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="icon-btn" onclick="deleteNotice('${n.id}')"><i class="fa-solid fa-trash text-rose-500"></i></button>
+        </div>
+      </div>
+    </div>`).join('') : `<p class="py-6 text-center text-slate-400 text-sm">${t('noNotices')}</p>`;
+}
+function saveNotice(e) {
+  e.preventDefault();
+  const title = $('nTitle').value.trim();
+  if (!title) return;
+  const body = $('nBody').value.trim();
+  if (!Array.isArray(db.notices)) db.notices = [];
+  if (editingNoticeId) {
+    const n = db.notices.find(x => x.id === editingNoticeId);
+    if (n) { n.title = title; n.body = body; }
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('notice_edit', title, '');
+    showToast(t('noticeUpdated'));
+    editingNoticeId = null;
+  } else {
+    db.notices.push({ id: uid(), title, body, date: todayISO() });
+    if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('notice_add', title, '');
+    showToast(t('noticeAdded'));
+  }
+  saveDB();
+  renderNotices();
+}
+function editNotice(id) {
+  const n = (db.notices || []).find(x => x.id === id);
+  if (!n) return;
+  editingNoticeId = id;
+  renderNotices();
+  $('nTitle').value = n.title;
+  $('nBody').value = n.body || '';
+  $('nTitle').focus();
+}
+function cancelNoticeEdit() { editingNoticeId = null; renderNotices(); }
+function deleteNotice(id) {
+  const n = (db.notices || []).find(x => x.id === id);
+  confirmAction(t('confirmDelete'), () => {
+    db.notices = (db.notices || []).filter(x => x.id !== id);
+    if (window.OTWCloudLogActivity && n) window.OTWCloudLogActivity('notice_delete', n.title, '');
+    saveDB();
+    showToast(t('noticeDeleted'));
+    renderNotices();
+  });
+}
+
 function setDuesFilter(f) { duesFilter = f; renderDues(); }
 
-/* ── Activity timeline ──────────────────────────────────── */ const ACTIVITY_LABELS = { txn_add: 'txnAdded', txn_edit: 'txnUpdated', txn_delete: 'txnDeleted', member_add: 'memberAdded', member_edit: 'memberUpdated', member_delete: 'memberDeleted', member_status: 'actStatus', settings_save: 'saved', backup_import: 'backupImported', data_clear: 'dataCleared', demo_load: 'demoLoaded' }; function renderActivity() { const el = $('activityList'); if (!el) return; el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">...</p>'; if (!window.OTWCloudLoadActivity) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; return; } window.OTWCloudLoadActivity(function (items, err) { if (err || !items) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('errGeneric') + '</p>'; return; } el.innerHTML = items.length ? items.map(function (a) { return '<div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">' + '<div class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left"></i></div>' + '<div class="min-w-0 flex-1"><p class="text-sm text-slate-800"><span class="font-semibold">' + esc(t(ACTIVITY_LABELS[a.action] || 'saved')) + '</span> — ' + esc(a.target || '') + (a.details ? ' <span class="text-slate-500">(' + esc(a.details) + ')</span>' : '') + '</p>' + '<p class="text-xs text-slate-400 mt-0.5">' + esc(a.email || '') + ' • ' + esc(a.role || '') + ' • ' + esc(fmtDate((a.at || '').slice(0, 10))) + ' ' + esc((a.at || '').slice(11, 16)) + '</p></div></div>'; }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; }); } /* ── Sidebar / header ───────────────────────────────────── */
+/* ── Activity timeline ──────────────────────────────────── */ const ACTIVITY_LABELS = { txn_add: 'txnAdded', txn_edit: 'txnUpdated', txn_delete: 'txnDeleted',   notice_add: 'noticeAdded',   notice_edit: 'noticeUpdated',   notice_delete: 'noticeDeleted', member_add: 'memberAdded', member_edit: 'memberUpdated', member_delete: 'memberDeleted', member_status: 'actStatus', settings_save: 'saved', backup_import: 'backupImported', data_clear: 'dataCleared', demo_load: 'demoLoaded' }; function renderActivity() { const el = $('activityList'); if (!el) return; el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">...</p>'; if (!window.OTWCloudLoadActivity) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; return; } window.OTWCloudLoadActivity(function (items, err) { if (err || !items) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('errGeneric') + '</p>'; return; } el.innerHTML = items.length ? items.map(function (a) { return '<div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">' + '<div class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left"></i></div>' + '<div class="min-w-0 flex-1"><p class="text-sm text-slate-800"><span class="font-semibold">' + esc(t(ACTIVITY_LABELS[a.action] || 'saved')) + '</span> — ' + esc(a.target || '') + (a.details ? ' <span class="text-slate-500">(' + esc(a.details) + ')</span>' : '') + '</p>' + '<p class="text-xs text-slate-400 mt-0.5">' + esc(a.email || '') + ' • ' + esc(a.role || '') + ' • ' + esc(fmtDate((a.at || '').slice(0, 10))) + ' ' + esc((a.at || '').slice(11, 16)) + '</p></div></div>'; }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; }); } /* ── Sidebar / header ───────────────────────────────────── */
 function updateSidebarStats() {
   $('sidebarBalance').textContent = fmtMoney(currentBalance());
   $('sidebarBalanceSub').textContent =
@@ -172,7 +246,8 @@ function importBackup(file) {
     try {
       const parsed = JSON.parse(e.target.result);
       if (!parsed || !parsed.settings || !Array.isArray(parsed.members) || !Array.isArray(parsed.transactions)) throw 0;
-      db = parsed;
+            db = parsed;
+      if (!Array.isArray(db.notices)) db.notices = [];
       saveDB();
       currentLang = db.settings.lang === 'en' ? 'en' : 'bn';
       setLang(currentLang);
