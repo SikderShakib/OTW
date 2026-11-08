@@ -60,7 +60,6 @@ function openMemberModal(id) {
   memberPhotoData = '';
   $('mPhotoPreview').innerHTML = '<i class="fa-solid fa-user text-slate-300"></i>';
   $('mDesignation').innerHTML = ROLES.map(r => `<option value="${r}">${roleName(r)}</option>`).join('');
-  $('mMonthlyFee').innerHTML = [100, 200, 500].map(v => `<option value="${v}">${fmtMoney(v)}</option>`).join('');
 
   if (id) {
     const m = db.members.find(x => x.id === id);
