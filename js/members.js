@@ -198,6 +198,7 @@ function buildIdCardHTML(m) {
         <p>${t('cardScan')}</p>
       </div>
     </div>
+        ${memberTxnHistoryHTML(m)}
     <div class="idcard-footer">
       <span><i class="fa-solid fa-location-dot"></i> ${esc(db.settings.orgAddress || '')}</span>
       <span class="idcard-status ${m.status}">${m.status === 'active' ? t('statusActive') : t('statusInactive')}</span>
@@ -205,6 +206,22 @@ function buildIdCardHTML(m) {
   </div>`;
 }
 
+/* Member's own transaction history (shown on the ID card) */
+function memberTxnHistoryHTML(m) {
+  const txns = db.transactions
+    .filter(x => x.memberId === m.id)
+    .sort((a, b) => a.date === b.date ? (b.createdAt || 0) - (a.createdAt || 0) : (a.date < b.date ? 1 : -1))
+    .slice(0, 8);
+  if (!txns.length) return '';
+  return `<div class="px-5 pb-4">
+    <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">${t('cardTxnHistory')}</p>
+    ${txns.map(x => `<div class="flex items-center gap-2 py-1 text-sm border-t border-slate-100">
+      <span class="text-slate-400 text-xs whitespace-nowrap">${fmtDate(x.date)}</span>
+      <span class="flex-1 truncate text-slate-700">${esc(x.description || catName(x.category))}</span>
+      <span class="font-semibold whitespace-nowrap ${x.type === 'income' ? 'text-emerald-700' : 'text-rose-600'}">${x.type === 'income' ? '+' : '−'}${fmtMoney(x.amount)}</span>
+    </div>`).join('')}
+  </div>`;
+}
 function drawQr(member) {
   const box = $('idCardQr');
   if (!box) return;
