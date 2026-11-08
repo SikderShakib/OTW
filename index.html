@@ -143,7 +143,15 @@ try {
 
       <!-- ─────────── PAGE: DASHBOARD ─────────── -->
       <section id="page-dashboard" class="page">
-        <!-- Stat cards -->
+<!-- Notice board -->
+        <div class="panel mb-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="panel-title"><i class="fa-solid fa-bullhorn text-brand-600"></i>i><span data-i18n="noticesTitle">নোটিশ বোর্ড</span></h3>
+          </div>
+          <div id="noticeFormWrap"></div>
+          <div id="noticesList"></div>
+        </div>
+            <!-- Stat cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           <div class="stat-card">
             <div class="flex items-start justify-between">
@@ -219,14 +227,6 @@ try {
             <div id="pendingList" class="space-y-2.5"></div>
           </div>
         </div>
-        <!-- Notice board -->
-  <div class="panel mt-5">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="panel-title"><i class="fa-solid fa-bullhorn text-brand-600"></i><span data-i18n="noticesTitle">নোটিশ বোর্ড</span></h3>
-    </div>
-    <div id="noticeFormWrap"></div>
-    <div id="noticesList"></div>
-  </div>
 </section>
 
       <!-- ─────────── PAGE: MEMBERS ─────────── -->
