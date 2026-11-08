@@ -231,3 +231,6 @@ tbody tr:hover { background: #f8fafc; }
   }
   @page { margin: 8mm; }
 }
+
+  /* Member self-service mode: hide sidebar + quick entry */
+  body.member-mode #sidebar, body.member-mode #menuBtn, body.member-mode #quickEntryBtn { display: none !important; }
