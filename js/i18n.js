@@ -187,6 +187,7 @@ const I18N = {
     today: 'আজ',
 
     /* Roles */
+    role_founder: 'প্রতিষ্ঠাতা',
     role_president: 'সভাপতি',
     role_vp: 'সহ-সভাপতি',
     role_gs: 'সাধারণ সম্পাদক',
@@ -194,6 +195,10 @@ const I18N = {
     role_treasurer: 'কোষাধ্যক্ষ',
     role_org: 'সাংগঠনিক সম্পাদক',
     role_office: 'দপ্তর সম্পাদক',
+    role_publicity: 'প্রচার সম্পাদক',
+    role_sports: 'ক্রীড়া সম্পাদক',
+    role_cultural: 'সাংস্কৃতিক সম্পাদক',
+    role_advisor: 'উপদেষ্টা',
     role_member: 'সদস্য',
 
     /* Categories */
@@ -428,6 +433,7 @@ const I18N = {
     yes: 'Yes',
     today: 'Today',
 
+    role_founder: 'Founder',
     role_president: 'President',
     role_vp: 'Vice President',
     role_gs: 'General Secretary',
@@ -435,6 +441,10 @@ const I18N = {
     role_treasurer: 'Treasurer',
     role_org: 'Organizing Secretary',
     role_office: 'Office Secretary',
+    role_publicity: 'Publicity Secretary',
+    role_sports: 'Sports Secretary',
+    role_cultural: 'Cultural Secretary',
+    role_advisor: 'Advisor',
     role_member: 'Member',
 
     cat_subscription: 'Member Subscription',
@@ -494,7 +504,7 @@ const I18N = {
 };
 
 /* Master lists (keys are language-independent) */
-const ROLES = ['president', 'vp', 'gs', 'jgs', 'treasurer', 'org', 'office', 'member'];
+const ROLES = ['founder', 'president', 'vp', 'gs', 'jgs', 'treasurer', 'org', 'office', 'publicity', 'sports', 'cultural', 'advisor', 'member'];
 const INCOME_CATEGORIES = ['subscription', 'donation', 'event_income', 'other_income'];
 const EXPENSE_CATEGORIES = ['office', 'event', 'printing', 'transport', 'welfare', 'other_expense'];
 
