@@ -1,20 +1,20 @@
 rules_version = '2';
 
-// ════════════════════════════════════════════════════════════
-//  OTW — Firestore Security Rules
-//  Paste this into: Firebase Console → Firestore Database →
-//  Rules → Publish.  (See CLOUD_SETUP.md)
-//
-//  Data model:
-//    /roles/{uid}     → { email, role }   role: admin | treasurer | viewer | pending
-//    /appdata/main    → the whole app state (settings, members, transactions)
-//
-//  • Anyone can create an account, but new users start as
-//    "pending" and CANNOT read or write any data.
-//  • An admin approves people by changing their role
-//    (in the app: Settings → Team Access, or in this console).
-//  • Only admin + treasurer can modify data; viewers are read-only.
-// ════════════════════════════════════════════════════════════
+// OTW — Firestore Security Rules
+// Data model:
+//   /roles/{uid}           -> { email, role, memberId? }
+//                           role: admin | treasurer | viewer | member | pending
+//   /appdata/main          -> the whole app state (settings, members, transactions)
+//   /member_profiles/{mid} -> one doc per LINKED member (mid = internal member id,
+//                           e.g. mem_104): { uid, memberId, name, designation,
+//                           phone, status, totalPaid, lastPaid, txns: [...] }
+//                           Written by admin/treasurer sync; readable ONLY by
+//                           the linked member (role == 'member' + roles doc
+//                           memberId matches the doc id).
+// New sign-ups start as "pending" and cannot read anything. An admin approves
+// them (Settings -> Team Access); for role "member" the admin also picks which
+// member record the login belongs to (roles/{uid}.memberId). Members cannot
+// read /appdata/main at all.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -27,35 +27,43 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/roles/$(uid));
     }
 
-    function myRole() {
+    function myRoleData() {
       return (signedIn() && roleDocExists(request.auth.uid))
-        ? get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role
-        : 'none';
+        ? get(/databases/$(database)/documents/roles/$(request.auth.uid)).data
+        : null;
+    }
+
+    function myRole() {
+      var d = myRoleData();
+      return d != null ? d.role : 'none';
+    }
+
+    function myMemberId() {
+      var d = myRoleData();
+      return (d != null && 'memberId' in d && d.memberId is string) ? d.memberId : '';
     }
 
     function isAdmin()   { return myRole() == 'admin'; }
     function canRead()   { return myRole() in ['admin', 'treasurer', 'viewer']; }
     function canWrite()  { return myRole() in ['admin', 'treasurer']; }
 
-    // ── User roles ──────────────────────────────────────────
     match /roles/{uid} {
-      // A user can read their own role; admins can read anyone's.
       allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
-      // Only admins can list the whole team.
       allow list: if isAdmin();
-      // On first sign-in the app creates the user's own role doc,
-      // but ONLY with role = "pending" (no self-promotion possible).
       allow create: if signedIn()
                     && request.auth.uid == uid
                     && request.resource.data.role == 'pending';
-      // Only admins may change or remove roles.
       allow update, delete: if isAdmin();
     }
 
-    // ── Application data ────────────────────────────────────
     match /appdata/{docId} {
       allow read: if canRead();
       allow write: if canWrite();
+    }
+
+    match /member_profiles/{mid} {
+      allow read: if signedIn() && myRole() == 'member' && myMemberId() == mid;
+      allow create, update, delete: if canWrite();
     }
   }
 }
