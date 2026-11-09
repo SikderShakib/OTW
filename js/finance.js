@@ -56,6 +56,7 @@ function renderFinance() {
       <td class="text-right font-semibold text-rose-600 whitespace-nowrap">${!isInc ? fmtMoney(tx.amount) : '<span class="text-slate-300">—</span>'}</td>
       <td class="text-right font-semibold ${balances[tx.id] >= 0 ? 'text-slate-700' : 'text-rose-600'} whitespace-nowrap">${fmtMoney(balances[tx.id] || 0)}</td>
       <td class="text-right whitespace-nowrap">
+        <button class="row-btn bg-brand-50 text-brand-600 hover:bg-brand-100" onclick="showReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i></button>
         <button class="row-btn bg-slate-100 text-slate-600 hover:bg-slate-200" onclick="openTxnModal(null, '${tx.id}')"><i class="fa-solid fa-pen"></i></button>
         <button class="row-btn bg-rose-50 text-rose-600 hover:bg-rose-100" onclick="deleteTxn('${tx.id}')"><i class="fa-solid fa-trash"></i></button>
       </td>
@@ -109,19 +110,88 @@ function buildTxnCategoryOptions(type) {
 function toggleTxnMemberField() {
   const show = $('tType').value === 'income' && $('tCategory').value === 'subscription';
   $('tMemberWrap').classList.toggle('hidden', !show);
-   $('tMonthWrap').classList.toggle('hidden', !show);
+   $('tMonthsWrap').classList.toggle('hidden', !show);
   $('tVendorWrap').classList.toggle('hidden', show);
   if (show) {
     $('tMember').innerHTML = db.members.filter(m => m.status === 'active')
       .map(m => `<option value="${m.id}">${esc(m.name)} (${esc(m.memberId)})</option>`).join('');
-     if (!$('tMonth').value) $('tMonth').value = currentMonthKey();
+     buildMonthsChecklist();
   }
 }
-function syncTxnMonthToDate() {
-   const mv = $('tMonth').value;
-   if ($('tType').value === 'income' && $('tCategory').value === 'subscription' && mv) {
-      $('tDate').value = mv + '-01';
-   }
+function pickedMonths() {
+  return [...document.querySelectorAll('#tMonthsList .mrow input[type=checkbox]:checked')]
+    .map(c => ({ m: c.value, a: Math.abs(+c.closest('.mrow').querySelector('.mamt').value || 0) }))
+    .sort((x, y) => x.m < y.m ? -1 : 1);
+}
+function syncMonthsHint() {
+  const ms = pickedMonths();
+  const sum = ms.reduce((s, x) => s + x.a, 0);
+  $('tMonthsHint').textContent = ms.length
+    ? fmtNum(ms.length) + ' ' + t('monthsPicked') + ' · ' + monthsLabel(ms.map(x => x.m)) + ' · ' + fmtMoney(sum)
+    : t('errPickMonth');
+  if (ms.length) { $('tDate').value = ms[0].m + '-01'; $('tAmount').value = sum; }
+}
+function buildMonthsChecklist(checked) {
+  const list = $('tMonthsList');
+  const pre = checked || [{ m: currentMonthKey() }];
+  const preMap = {};
+  pre.forEach(x => {
+    const k = typeof x === 'string' ? x : x.m;
+    if (k) preMap[k] = (x && typeof x === 'object' && +x.a) ? +x.a : null;
+  });
+  const sel = db.members.find(x => x.id === $('tMember').value);
+  const fee = sel ? memberMonthlyFee(sel) : 200;
+  const [cy, cm] = currentMonthKey().split('-').map(Number);
+  const endKey = (() => {
+    const d = new Date(cy, cm + 11, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  })();
+  let html = '';
+  let k = '2026-09';
+  while (k <= endKey) {
+    const [y, m] = k.split('-').map(Number);
+    const on = Object.prototype.hasOwnProperty.call(preMap, k);
+    const amt = preMap[k] != null ? preMap[k] : (on ? fee : '');
+    html += '<label class="mrow flex items-center gap-2 py-1"><input type="checkbox" value="' + k + '"' + (on ? ' checked' : '') + ' onchange="onMonthRowChange(this)"><span class="flex-1">' + monthFullLabel(k) + '</span><input type="number" class="mamt input w-24" min="1" value="' + amt + '" onchange="syncMonthsHint()"></label>';
+    const d = new Date(y, m, 1);
+    k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  list.innerHTML = html;
+  syncMonthsHint();
+}
+function onMonthRowChange(cb) {
+  if (cb.checked) {
+    const amt = cb.closest('.mrow').querySelector('.mamt');
+    if (amt && !+amt.value) {
+      const m = db.members.find(x => x.id === $('tMember').value);
+      if (m) amt.value = memberMonthlyFee(m);
+    }
+  }
+  syncMonthsHint();
+}
+let currentReceiptTx = null;
+function showReceipt(id) {
+  const tx = db.transactions.find(x => x.id === id);
+  if (!tx) return;
+  currentReceiptTx = tx;
+  const m = tx.memberId ? db.members.find(x => x.id === tx.memberId) : null;
+  const months = tx.category === 'subscription' ? txnMonths(tx) : [];
+  $('receiptBody').innerHTML =
+    '<div class="text-center mb-4"><p class="font-bold text-lg">' + esc(currentLang === 'bn' ? db.settings.orgName : (db.settings.orgNameEn || db.settings.orgName)) + '</p>'
+    + '<p class="text-xs text-slate-500">' + esc(db.settings.orgAddress || '') + '</p></div>'
+    + '<div class="space-y-2 text-sm">'
+    + '<div class="flex justify-between border-b pb-2"><span class="text-slate-500">' + t('fMember') + '</span><span class="font-semibold">' + esc(m ? m.name + ' (' + m.memberId + ')' : '-') + '</span></div>'
+    + (months.length ? '<div class="border-b pb-2"><p class="text-slate-500 mb-1">' + t('monthsCovered') + '</p>' + months.map(k => '<div class="flex justify-between"><span>• ' + monthFullLabel(k) + '</span><span class="font-semibold">' + fmtMoney(txnMonthAmount(tx, k)) + '</span></div>').join('') + '</div>' : '')
+    + '<div class="flex justify-between border-b pb-2"><span class="text-slate-500">' + t('fAmount') + '</span><span class="font-bold text-brand-700">' + fmtMoney(tx.amount) + '</span></div>'
+    + '<div class="flex justify-between"><span class="text-slate-500">' + t('fDate') + '</span><span class="font-semibold">' + fmtDate(tx.date) + '</span></div>'
+    + '</div>';
+  openModal('receiptModal');
+}
+function printReceipt() {
+  if (!currentReceiptTx) return;
+  const area = $('print-area');
+  area.innerHTML = '<div style="padding:16px">' + $('receiptBody').innerHTML + '</div>';
+  setTimeout(() => window.print(), 350);
 }
 function setTxnType(type) {
   $('tType').value = type;
@@ -143,7 +213,7 @@ function openTxnModal(type, editId, prefill) {
     $('tCategory').value = tx.category;
     toggleTxnMemberField();
     $('tDate').value = tx.date;
-     if (tx.category === 'subscription') $('tMonth').value = monthKeyOf(tx.date);
+     if (tx.category === 'subscription') buildMonthsChecklist(tx.months && tx.months.length ? tx.months : [{m: monthKeyOf(tx.date)}]);
     $('tAmount').value = tx.amount;
     $('tDesc').value = tx.description || '';
     $('tVendor').value = tx.vendor || '';
@@ -155,7 +225,7 @@ function openTxnModal(type, editId, prefill) {
       if (prefill.category) { $('tCategory').value = prefill.category; toggleTxnMemberField(); }
       if (prefill.amount) $('tAmount').value = prefill.amount;
       if (prefill.date) $('tDate').value = prefill.date;
-       if (prefill.date) $('tMonth').value = monthKeyOf(prefill.date);
+       if (prefill.date) buildMonthsChecklist([{m: monthKeyOf(prefill.date)}]);
       if (prefill.description) $('tDesc').value = prefill.description;
       if (prefill.vendor) $('tVendor').value = prefill.vendor;
     }
@@ -170,28 +240,36 @@ function saveTxn(e) {
   const category = $('tCategory').value;
   const isSub = type === 'income' && category === 'subscription';
   const memberId = isSub ? $('tMember').value : '';
-   const monthVal = isSub ? ($('tMonth').value || '') : '';
-   const monthKey = monthVal || monthKeyOf($('tDate').value || todayISO());
-  let desc = $('tDesc').value.trim();
+   const months = isSub ? pickedMonths() : [];
+   const monthKey = months.length ? months[0].m : monthKeyOf($('tDate').value || todayISO());
+  if (isSub && !months.length) { showToast(t('errPickMonth'), 'error'); return; }
+if (isSub && months.some(x => !x.a)) { showToast(t('enterAmount'), 'error'); return; }
+let desc = $('tDesc').value.trim();
   if (!desc) {
     if (isSub && memberId) {
       const m = db.members.find(x => x.id === memberId);
-      desc = m ? (currentLang === 'bn' ? `${m.name} এর মাসিক চাঁদা (${monthFullLabel(monthKey)})` : `${m.name}'s monthly subscription (${monthFullLabel(monthKey)})`) : catName(category);
+const keys = months.map(x => x.m);
+const sameAmt = months.length && months.every(x => x.a === months[0].a);
+const suffix = sameAmt ? fmtNum(months.length) + ' মাস × ' + fmtMoney(months[0].a) : fmtNum(months.length) + ' মাস, ' + months.map(x => fmtNum(x.a)).join('+');
+const suffixEn = sameAmt ? fmtNum(months.length) + ' months × ' + fmtMoney(months[0].a) : fmtNum(months.length) + ' months, ' + months.map(x => fmtNum(x.a)).join('+');
+      desc = m ? (currentLang === 'bn' ? `${m.name} এর মাসিক চাঁদা (${monthsLabel(keys)}) • ${suffix}` : `${m.name}'s monthly subscription (${monthsLabel(keys)}) • ${suffixEn}`) : catName(category);
     } else desc = catName(category);
   }
 
   const data = {
-    date: monthVal ? monthVal + '-01' : ($('tDate').value || todayISO()),
+    date: months.length ? months[0].m + '-01' : ($('tDate').value || todayISO()),
     type, category,
-    amount: Math.abs(+$('tAmount').value || 0),
+    amount: isSub ? months.reduce((s, x) => s + x.a, 0) : Math.abs(+$('tAmount').value || 0),
     description: desc,
     vendor: isSub ? '' : $('tVendor').value.trim(),
     memberId
   };
-  if (!data.amount) { showToast(t('enterAmount'), 'error'); return; }
+  if (isSub) data.months = months;
+if (!data.amount) { showToast(t('enterAmount'), 'error'); return; }
 
   if (editId) {
     Object.assign(db.transactions.find(x => x.id === editId), data);
+if (!isSub) delete db.transactions.find(x => x.id === editId).months;
     showToast(t('txnUpdated'));
   } else {
     db.transactions.push({ id: uid(), createdAt: Date.now(), ...data });
