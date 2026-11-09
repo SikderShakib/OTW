@@ -591,7 +591,7 @@ try {
       </div>
       <div><label class="label" data-i18n="fCategory">ক্যাটাগরি</label><select id="tCategory" class="input"></select></div>
       <div id="tMemberWrap" class="hidden"><label class="label" data-i18n="fMember">সদস্য নির্বাচন করুন</label><select id="tMember" class="input"></select></div>
-            <div id="tMonthWrap" class="hidden"><label class="label" data-i18n="fChandaMonth">কোন মাসের চাঁদা</label>label><input id="tMonth" type="month" class="input" onchange="syncTxnMonthToDate()"></div>
+            <div id="tMonthsWrap" class="hidden"><label class="label" data-i18n="fChandaMonths">কোন কোন মাসের চাঁদা</label><div id="tMonthsList" class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto border rounded-xl p-2"></div><p id="tMonthsHint" class="text-xs text-slate-500 mt-1"></p></div>
       <div><label class="label" data-i18n="fDesc">বিবরণ</label><input id="tDesc" type="text" class="input"></div>
       <div id="tVendorWrap"><label class="label" data-i18n="fVendor">বিক্রেতা / দোকানের নাম</label><input id="tVendor" type="text" class="input"></div>
       <div class="flex gap-3 pt-2">
@@ -602,6 +602,7 @@ try {
   </div>
 </div>
 
+<div id="receiptModal" class="modal"><div class="modal-backdrop" data-close="receiptModal"></div><div class="modal-panel max-w-lg"><div class="flex items-center justify-between mb-5"><h3 class="text-lg font-bold"><i class="fa-solid fa-receipt text-brand-600"></i> <span data-i18n="receiptTitle">চাঁদার রসিদ</span></h3><button class="icon-btn" data-close="receiptModal"><i class="fa-solid fa-xmark"></i></button></div><div id="receiptBody"></div><div class="flex gap-3 mt-6"><button onclick="printReceipt()" class="btn-secondary flex-1 justify-center"><i class="fa-solid fa-print text-brand-600"></i><span data-i18n="print">প্রিন্ট</span></button><button type="button" class="btn-primary flex-1 justify-center" data-close="receiptModal"><span data-i18n="close">বন্ধ করুন</span></button></div></div></div>
 <!-- ══════════════════ MODAL: ID CARD ══════════════════ -->
 <div id="idCardModal" class="modal">
   <div class="modal-backdrop" data-close="idCardModal"></div>
