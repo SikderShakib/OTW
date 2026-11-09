@@ -132,7 +132,7 @@ function recomputeAllLastPaid(data) {
   const d = data || db;
   d.members.forEach(m => {
     const subs = d.transactions.filter(t => t.type === 'income' && t.category === 'subscription' && t.memberId === m.id);
-    m.lastPaid = subs.length ? subs.map(t => monthKeyOf(t.date)).sort().pop() : null;
+    m.lastPaid = subs.length ? subs.flatMap(t => txnMonths(t)).sort().pop() : null;
   });
 }
 function isPaidThisMonth(member) { return !!member.lastPaid && member.lastPaid >= currentMonthKey(); }
