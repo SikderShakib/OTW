@@ -234,3 +234,9 @@ tbody tr:hover { background: #f8fafc; }
 
   /* Member self-service mode: hide sidebar + quick entry */
   body.member-mode #sidebar, body.member-mode #menuBtn, body.member-mode #quickEntryBtn { display: none !important; }
+/* OTW Assistant chatbot */
+.chat-msg-user { background:#047857; color:#fff; margin-left:auto; }
+.chat-msg-bot { background:#f1f5f9; color:#1e293b; }
+.chat-bubble { max-width:85%; padding:8px 12px; border-radius:14px; white-space:pre-line; word-break:break-word; }
+.chat-chip { font-size:12px; font-weight:600; padding:6px 10px; border-radius:9999px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
+.chat-chip:hover { background:#d1fae5; }
