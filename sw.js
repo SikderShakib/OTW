@@ -3,7 +3,7 @@
    installed on the home screen. Firebase and CDN requests always go to the
    network — the service worker never caches them.
    To ship a new shell version, bump the CACHE name below. */
-const CACHE = 'otw-shell-v3';
+const CACHE = 'otw-shell-v2';
 const SHELL = [
   './',
   './index.html',
@@ -17,7 +17,7 @@ const SHELL = [
   './js/scanner.js',
   './js/reports.js',
   './js/app.js',
-  './js/cloud.js', './js/chatbot.js',
+  './js/cloud.js',
   './js/firebase-config.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
