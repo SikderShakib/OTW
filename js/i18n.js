@@ -560,7 +560,7 @@ const I18N = {
   navMyProfile: 'My Profile',
     myTotalPaid: 'Total deposited',
     myThisMonth: 'Paid this month',
-    myLastPaid: 'Last paid (month)'
+    myLastPaid: 'Last paid (month)',
     myPayments: 'My payments',
     myNoPayments: 'No payments yet',
     linkMember: 'Linked member',
