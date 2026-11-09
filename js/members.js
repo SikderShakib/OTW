@@ -71,6 +71,7 @@ function openMemberModal(id) {
     $('mDesignation').value = m.designation;
     $('mMonthlyFee').value = String(memberMonthlyFee(m));
     $('mPhone').value = m.phone;
+     $('mPhone2').value = m.phone2 || '';
     $('mEmail').value = m.email || '';
     $('mBlood').value = m.blood || '';
     $('mJoinDate').value = m.joinDate || '';
@@ -85,6 +86,7 @@ function openMemberModal(id) {
     $('mJoinDate').value = todayISO();
     $('mDesignation').value = 'member';
     $('mMonthlyFee').value = '200';
+     $('mPhone2').value = '';
   }
   openModal('memberModal');
 }
@@ -105,6 +107,7 @@ function saveMember(e) {
     designation: $('mDesignation').value,
     monthlyFee: +$('mMonthlyFee').value || 200,
     phone: $('mPhone').value.trim(),
+     phone2: $('mPhone2').value.trim(),
     email: $('mEmail').value.trim(),
     blood: $('mBlood').value,
     joinDate: $('mJoinDate').value || todayISO(),
@@ -198,6 +201,7 @@ function buildIdCardHTML(m) {
         <div class="idcard-role">${roleName(m.designation)}</div>
         <div class="idcard-row"><span class="k">${t('fMemberId')}</span><span class="v">${esc(num(m.memberId))}</span></div>
         <div class="idcard-row"><span class="k">${t('fPhone')}</span><span class="v">${esc(num(m.phone))}</span></div>
+        ${m.phone2 ? `<div class="idcard-row"><span class="k">${t('fPhone2')}</span><span class="v">${esc(num(m.phone2))}</span></div>` : ''}
         ${m.blood ? `<div class="idcard-row"><span class="k">${t('fBlood')}</span><span class="v">${esc(m.blood)}</span></div>` : ''}
         <div class="idcard-row"><span class="k">${t('cardMemberSince')}</span><span class="v">${fmtDate(m.joinDate)}</span></div>
       </div>
