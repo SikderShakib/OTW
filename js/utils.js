@@ -48,6 +48,34 @@ function monthFullLabel(key) { // '2026-11' → 'নভেম্বর ২০২
     .toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-US', { month: 'long', year: 'numeric' });
 }
 
+function txnMonths(tx) {
+  if (tx && Array.isArray(tx.months) && tx.months.length)
+    return tx.months.map(x => (typeof x === 'string' ? x : x.m)).filter(Boolean).sort();
+  return [monthKeyOf(tx ? tx.date : '')];
+}
+function txnMonthAmount(tx, key) {
+  if (tx && Array.isArray(tx.months)) {
+    const hit = tx.months.find(x => (typeof x === 'string' ? x : x.m) === key);
+    if (hit && typeof hit === 'object' && +hit.a) return +hit.a;
+  }
+  const keys = txnMonths(tx);
+  return keys.length ? Math.round((+tx.amount || 0) / keys.length) : 0;
+}
+function monthsLabel(months) {
+  const ms = [...months].sort();
+  if (!ms.length) return '';
+  if (ms.length === 1) return monthFullLabel(ms[0]);
+  // consecutive range?
+  const consecutive = ms.every((k, i) => {
+    if (!i) return true;
+    const [py, pm] = ms[i - 1].split('-').map(Number);
+    const [y, m] = k.split('-').map(Number);
+    return (y * 12 + m) - (py * 12 + pm) === 1;
+  });
+  return consecutive
+    ? monthFullLabel(ms[0]) + ' - ' + monthFullLabel(ms[ms.length - 1])
+    : ms.map(monthFullLabel).join(', ');
+}
 /* Per-member monthly subscription (100/200/500). Explicit value wins;
    otherwise derive from the member's latest subscription payment,
    else fall back to 200. */
@@ -58,7 +86,7 @@ function memberMonthlyFee(m) {
     ? db.transactions.filter(x => x.memberId === m.id && x.category === 'subscription' && x.type === 'income') : [];
   if (!subs.length) return 200;
   const latest = subs.slice().sort((a, b) => (a.date < b.date ? 1 : -1))[0];
-  const amt = +latest.amount || 0;
+  const amt = txnMonthAmount(latest, txnMonths(latest).slice().sort().pop());
   if (amt <= 150) return 100;
   if (amt <= 300) return 200;
   return 500;
