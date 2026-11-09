@@ -54,7 +54,7 @@
     rerenderMember: function () { renderMemberProfile(currentMemberProfile, currentMemberProfile ? 'ok' : (myMemberId ? 'notready' : 'nolink')); },
     saveLocalConfig: saveLocalConfig,
     signOut: doSignOut,
-    getRole: function () { return myRole; }
+    getRole: function () { return myRole; }, getMyProfile: function () { return currentMemberProfile; }, getMyMemberId: function () { return myMemberId; }
   };
   window.OTWCloudSetRole = function (uid, role) {
     if (!store || myRole !== 'admin') return;
