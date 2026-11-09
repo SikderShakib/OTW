@@ -7,8 +7,11 @@ let finSportsOnly = false;
 
 
 function monthTotals(monthKey) {
-  const list = db.transactions.filter(t => monthKeyOf(t.date) === monthKey);
-  return { income: totalIncome(list), expense: totalExpense(list) };
+const list = db.transactions.filter(t => txnCoversMonth(t, monthKey));
+return {
+   income: list.filter(t => t.type === 'income').reduce((s, t) => s + txnAmountInMonth(t, monthKey), 0),
+   expense: list.filter(t => t.type === 'expense').reduce((s, t) => s + txnAmountInMonth(t, monthKey), 0)
+};
 }
 
 function renderFinance() {
@@ -28,7 +31,8 @@ function renderFinance() {
   const list = sortedTxns().filter(tx => {
     if (finTypeFilter !== 'all' && tx.type !== finTypeFilter) return false;
     if (cat && tx.category !== cat) return false;
-    if (month && monthKeyOf(tx.date) !== month) return false;
+if (month && !txnCoversMonth(tx, month)) return false;
+   
      if (finSportsOnly && !isSportsTxn(tx)) return false;
     if (q && !((tx.description || '').toLowerCase().includes(q) || (tx.vendor || '').toLowerCase().includes(q))) return false;
     return true;
@@ -38,6 +42,7 @@ function renderFinance() {
     const isInc = tx.type === 'income';
     const member = tx.memberId ? db.members.find(m => m.id === tx.memberId) : null;
     const sub = [tx.vendor, member ? member.name : ''].filter(Boolean).join(' • ');
+     const dispAmt = month ? txnAmountInMonth(tx, month) : (+tx.amount || 0);
     return `<tr>
       <td class="whitespace-nowrap text-slate-600">${fmtDate(tx.date)}</td>
       <td>
@@ -52,8 +57,8 @@ function renderFinance() {
         </div>
       </td>
       <td><span class="chip">${catName(tx.category)}</span></td>
-      <td class="text-right font-semibold text-brand-700 whitespace-nowrap">${isInc ? fmtMoney(tx.amount) : '<span class="text-slate-300">—</span>'}</td>
-      <td class="text-right font-semibold text-rose-600 whitespace-nowrap">${!isInc ? fmtMoney(tx.amount) : '<span class="text-slate-300">—</span>'}</td>
+      <td class="text-right font-semibold text-brand-700 whitespace-nowrap">${isInc ? fmtMoney(dispAmt) : '<span class="text-slate-300">—</span>'}</td>
+      <td class="text-right font-semibold text-rose-600 whitespace-nowrap">${!isInc ? fmtMoney(dispAmt) : '<span class="text-slate-300">—</span>'}</td>
       <td class="text-right font-semibold ${balances[tx.id] >= 0 ? 'text-slate-700' : 'text-rose-600'} whitespace-nowrap">${fmtMoney(balances[tx.id] || 0)}</td>
       <td class="text-right whitespace-nowrap">
         <button class="row-btn bg-brand-50 text-brand-600 hover:bg-brand-100" onclick="showReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i></button>
@@ -64,8 +69,8 @@ function renderFinance() {
   }).join('');
 
   $('txnEmpty').classList.toggle('hidden', list.length > 0);
-  $('finFilteredIncome').textContent = fmtMoney(totalIncome(list));
-  $('finFilteredExpense').textContent = fmtMoney(totalExpense(list));
+$('finFilteredIncome').textContent = fmtMoney(list.filter(t => t.type === 'income').reduce((s, t) => s + (month ? txnAmountInMonth(t, month) : (+t.amount || 0)), 0));
+$('finFilteredExpense').textContent = fmtMoney(list.filter(t => t.type === 'expense').reduce((s, t) => s + (month ? txnAmountInMonth(t, month) : (+t.amount || 0)), 0));
   $('txnCountLine').textContent = `${fmtNum(list.length)} ${t('entries')}`;
 }
 /* One-click sports quick filter (matches খেলা / ক্রীড়া in description or vendor) */
