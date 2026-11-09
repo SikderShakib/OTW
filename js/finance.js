@@ -109,11 +109,19 @@ function buildTxnCategoryOptions(type) {
 function toggleTxnMemberField() {
   const show = $('tType').value === 'income' && $('tCategory').value === 'subscription';
   $('tMemberWrap').classList.toggle('hidden', !show);
+   $('tMonthWrap').classList.toggle('hidden', !show);
   $('tVendorWrap').classList.toggle('hidden', show);
   if (show) {
     $('tMember').innerHTML = db.members.filter(m => m.status === 'active')
       .map(m => `<option value="${m.id}">${esc(m.name)} (${esc(m.memberId)})</option>`).join('');
+     if (!$('tMonth').value) $('tMonth').value = currentMonthKey();
   }
+}
+function syncTxnMonthToDate() {
+   const mv = $('tMonth').value;
+   if ($('tType').value === 'income' && $('tCategory').value === 'subscription' && mv) {
+      $('tDate').value = mv + '-01';
+   }
 }
 function setTxnType(type) {
   $('tType').value = type;
@@ -135,6 +143,7 @@ function openTxnModal(type, editId, prefill) {
     $('tCategory').value = tx.category;
     toggleTxnMemberField();
     $('tDate').value = tx.date;
+     if (tx.category === 'subscription') $('tMonth').value = monthKeyOf(tx.date);
     $('tAmount').value = tx.amount;
     $('tDesc').value = tx.description || '';
     $('tVendor').value = tx.vendor || '';
@@ -146,6 +155,7 @@ function openTxnModal(type, editId, prefill) {
       if (prefill.category) { $('tCategory').value = prefill.category; toggleTxnMemberField(); }
       if (prefill.amount) $('tAmount').value = prefill.amount;
       if (prefill.date) $('tDate').value = prefill.date;
+       if (prefill.date) $('tMonth').value = monthKeyOf(prefill.date);
       if (prefill.description) $('tDesc').value = prefill.description;
       if (prefill.vendor) $('tVendor').value = prefill.vendor;
     }
@@ -160,16 +170,18 @@ function saveTxn(e) {
   const category = $('tCategory').value;
   const isSub = type === 'income' && category === 'subscription';
   const memberId = isSub ? $('tMember').value : '';
+   const monthVal = isSub ? ($('tMonth').value || '') : '';
+   const monthKey = monthVal || monthKeyOf($('tDate').value || todayISO());
   let desc = $('tDesc').value.trim();
   if (!desc) {
     if (isSub && memberId) {
       const m = db.members.find(x => x.id === memberId);
-      desc = m ? (currentLang === 'bn' ? `${m.name} এর মাসিক চাঁদা` : `${m.name}'s monthly subscription`) : catName(category);
+      desc = m ? (currentLang === 'bn' ? `${m.name} এর মাসিক চাঁদা (${monthFullLabel(monthKey)})` : `${m.name}'s monthly subscription (${monthFullLabel(monthKey)})`) : catName(category);
     } else desc = catName(category);
   }
 
   const data = {
-    date: $('tDate').value || todayISO(),
+    date: monthVal ? monthVal + '-01' : ($('tDate').value || todayISO()),
     type, category,
     amount: Math.abs(+$('tAmount').value || 0),
     description: desc,
