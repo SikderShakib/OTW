@@ -238,9 +238,11 @@ function drawQr(member) {
   const box = $('idCardQr');
   if (!box) return;
   box.innerHTML = '';
-  const payload = `OTW MEMBER\nID: ${member.memberId}\nName: ${member.name}\nRole: ${roleName(member.designation)}\nPhone: ${member.phone}`;
+  const payload = `OTW\nID: ${member.memberId}\n${member.name}`;
   if (typeof QRCode !== 'undefined') {
-    new QRCode(box, { text: payload, width: 66, height: 66, correctLevel: QRCode.CorrectLevel.M });
+    try {
+       new QRCode(box, { text: payload, width: 66, height: 66, correctLevel: QRCode.CorrectLevel.M });     } catch (e) {       box.innerHTML = '<i class="fa-solid fa-qrcode text-4xl text-slate-300"></i>';     
+                                                                                                                       }
   } else {
     box.innerHTML = '<i class="fa-solid fa-qrcode text-4xl text-slate-300"></i>';
   }
@@ -261,10 +263,14 @@ function printIdCard() {
   area.innerHTML = buildIdCardHTML(currentCardMember);
   const box = area.querySelector('#idCardQr');
   if (box && typeof QRCode !== 'undefined') {
-    new QRCode(box, {
-      text: `OTW MEMBER\nID: ${currentCardMember.memberId}\nName: ${currentCardMember.name}\nPhone: ${currentCardMember.phone}`,
+    try {
+       new QRCode(box, {
+      text: `OTW\nID: ${currentCardMember.memberId}\n${currentCardMember.name}`,
       width: 66, height: 66, correctLevel: QRCode.CorrectLevel.M
     });
+    } catch (e) {
+       box.innerHTML = '<i class="fa-solid fa-qrcode text-4xl text-slate-300"></i>';
+    }
   }
   setTimeout(() => window.print(), 350);
 }
@@ -275,6 +281,7 @@ async function downloadIdCard() {
   const prevTransform = el.style.transform;
   el.style.transform = 'none';
   try {
+     
     const canvas = await html2canvas(el, { scale: 3, backgroundColor: null, useCORS: true });
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/png');
