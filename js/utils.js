@@ -61,6 +61,18 @@ function txnMonthAmount(tx, key) {
   const keys = txnMonths(tx);
   return keys.length ? Math.round((+tx.amount || 0) / keys.length) : 0;
 }
+function txnCoversMonth(tx, key) {
+   return txnMonths(tx).includes(key);
+}
+function txnAmountInMonth(tx, key) {
+   if (!tx || !key) return 0;
+   if (tx.type === 'income' && tx.category === 'subscription') {
+      if (!txnCoversMonth(tx, key)) return 0;
+      return txnMonthAmount(tx, key);
+   }
+   return monthKeyOf(tx.date) === key ? (+tx.amount || 0) : 0;
+}
+
 function monthsLabel(months) {
   const ms = [...months].sort();
   if (!ms.length) return '';
