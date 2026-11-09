@@ -134,7 +134,7 @@ function syncMonthsHint() {
   $('tMonthsHint').textContent = ms.length
     ? fmtNum(ms.length) + ' ' + t('monthsPicked') + ' · ' + monthsLabel(ms.map(x => x.m)) + ' · ' + fmtMoney(sum)
     : t('errPickMonth');
-  if (ms.length) { $('tDate').value = ms[0].m + '-01'; $('tAmount').value = sum; }
+  if (ms.length) { $('tAmount').value = sum; }
 }
 function buildMonthsChecklist(checked) {
   const list = $('tMonthsList');
@@ -246,7 +246,7 @@ function saveTxn(e) {
   const isSub = type === 'income' && category === 'subscription';
   const memberId = isSub ? $('tMember').value : '';
    const months = isSub ? pickedMonths() : [];
-   const monthKey = months.length ? months[0].m : monthKeyOf($('tDate').value || todayISO());
+   
   if (isSub && !months.length) { showToast(t('errPickMonth'), 'error'); return; }
 if (isSub && months.some(x => !x.a)) { showToast(t('enterAmount'), 'error'); return; }
 let desc = $('tDesc').value.trim();
@@ -262,7 +262,7 @@ const suffixEn = sameAmt ? fmtNum(months.length) + ' months × ' + fmtMoney(mont
   }
 
   const data = {
-    date: months.length ? months[0].m + '-01' : ($('tDate').value || todayISO()),
+    date: ($('tDate').value || todayISO()),
     type, category,
     amount: isSub ? months.reduce((s, x) => s + x.a, 0) : Math.abs(+$('tAmount').value || 0),
     description: desc,
