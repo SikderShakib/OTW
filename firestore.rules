@@ -13,8 +13,8 @@ rules_version = '2';
 //                           memberId matches the doc id).
 // New sign-ups start as "pending" and cannot read anything. An admin approves
 // them (Settings -> Team Access); for role "member" the admin also picks which
-// member record the login belongs to (roles/{uid}.memberId). Members cannot
-// read /appdata/main at all.
+// member record the login belongs to (roles/{uid}.memberId). Members can read
+// /appdata/main (read-only, like viewers) but cannot write.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -61,7 +61,7 @@ service cloud.firestore {
       allow write: if canWrite();
     }
 
-    match /activity_log/{id} { allow read: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer' || myRole() == 'viewer || myRole() == 'member''); allow create: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer'); allow update, delete: if false; } match /member_profiles/{mid} {
+    match /activity_log/{id} { allow read: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer' || myRole() == 'viewer' || myRole() == 'member'); allow create: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer'); allow update, delete: if false; } match /member_profiles/{mid} {
       allow read: if signedIn() && (myRole() == 'member' || myRole() == 'admin' || myRole() == 'treasurer') && myMemberId() == mid;
       allow create, update, delete: if canWrite();
     }
