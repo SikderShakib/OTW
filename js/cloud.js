@@ -198,25 +198,16 @@ window.OTWCloudSyncMembers = function () { syncMemberProfiles(true); };
     started = true;
     firstSnapshot = true;
     renderHeaderChip();
-    if (myRole === 'member') { enterMemberMode(); return; }
-  if ((myRole === 'admin' || myRole === 'treasurer') && myMemberId) {
+  if ((myRole === 'admin' || myRole === 'treasurer' || myRole === 'member') && myMemberId) {
     var navBtn = $('navMyProfile');
     if (navBtn) navBtn.style.display = '';
     subscribeOwnProfile(false);
   }
     setSyncState('synced');
-    if (myRole === 'viewer') applyReadOnly();
+    if (myRole === 'viewer' || myRole === 'member') applyReadOnly();
     startDataSync();
     if (myRole === 'admin') startRolesWatch();
     renderSettingsCard();
-  }
-
-  /* ── Member self-service: own profile only ─────────────── */
-  function enterMemberMode() {
-    document.body.classList.add('member-mode');
-    if (!myMemberId) { renderMemberProfile(null, 'nolink'); showPage('myprofile'); return; }
-    setSyncState('synced');
-    subscribeOwnProfile(true);
   }
 
   /* Shared: subscribe to the linked member_profiles doc. When showProfilePage is false, the app stays on the current page (admin/treasurer) instead of opening the profile. */
@@ -466,7 +457,7 @@ function renderMemberProfile(p, state) {
     wrappedReadOnly = true;
     document.body.classList.add('viewer-mode');
     ['openMemberModal', 'saveMember', 'deleteMember', 'collectSubscription',
-     'openTxnModal', 'saveTxn', 'deleteTxn', 'saveNotice', 'deleteNotice', 'addScannedExpense',
+     'openTxnModal', 'saveTxn', 'deleteTxn', 'saveNotice', 'deleteNotice', 'saveProgram', 'deleteProgram', 'addScannedExpense',
      'saveSettings', 'loadDemoData', 'clearAllData', 'importBackup'].forEach(function (name) {
       if (typeof window[name] === 'function') {
         window[name] = function () { showToast(t('viewerReadonly'), 'error'); };
