@@ -5,7 +5,7 @@
 
 let currentPage = 'dashboard';
 const PAGE_TITLES = {
-  dashboard: 'navDashboard', members: 'navMembers', dues: 'navDues', activity: 'navActivity', finance: 'cashBook',
+  dashboard: 'navDashboard', members: 'navMembers', dues: 'navDues', activity: 'navActivity', programs: 'navPrograms', finance: 'cashBook',
   scanner: 'navScanner', reports: 'navReports', settings: 'navSettings',
   myprofile: 'myProfile'
 };
@@ -27,6 +27,7 @@ function renderCurrentPage() {
   else if (currentPage === 'members') renderMembers();
   else if (currentPage === 'dues') renderDues();   
   else if (currentPage === 'activity') renderActivity();
+     else if (currentPage === 'programs') renderPrograms();
   else if (currentPage === 'finance') renderFinance();
   else if (currentPage === 'reports') renderReports();
   else if (currentPage === 'settings') fillSettings();
@@ -185,9 +186,102 @@ function deleteNotice(id) {
   });
 }
 
-function setDuesFilter(f) { duesFilter = f; renderDues(); }
 
-/* ── Activity timeline ──────────────────────────────────── */ const ACTIVITY_LABELS = { txn_add: 'txnAdded', txn_edit: 'txnUpdated', txn_delete: 'txnDeleted',   notice_add: 'noticeAdded',   notice_edit: 'noticeUpdated',   notice_delete: 'noticeDeleted', member_add: 'memberAdded', member_edit: 'memberUpdated', member_delete: 'memberDeleted', member_status: 'actStatus', settings_save: 'saved', backup_import: 'backupImported', data_clear: 'dataCleared', demo_load: 'demoLoaded' }; function renderActivity() { const el = $('activityList'); if (!el) return; el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">...</p>'; if (!window.OTWCloudLoadActivity) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; return; } window.OTWCloudLoadActivity(function (items, err) { if (err || !items) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('errGeneric') + '</p>'; return; } el.innerHTML = items.length ? items.map(function (a) { return '<div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">' + '<div class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left"></i></div>' + '<div class="min-w-0 flex-1"><p class="text-sm text-slate-800"><span class="font-semibold">' + esc(t(ACTIVITY_LABELS[a.action] || 'saved')) + '</span> — ' + esc(a.target || '') + (a.details ? ' <span class="text-slate-500">(' + esc(a.details) + ')</span>' : '') + '</p>' + '<p class="text-xs text-slate-400 mt-0.5">' + esc(a.email || '') + ' • ' + esc(a.role || '') + ' • ' + esc(fmtDate((a.at || '').slice(0, 10))) + ' ' + esc((a.at || '').slice(11, 16)) + '</p></div></div>'; }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; }); } /* ── Sidebar / header ───────────────────────────────────── */
+/* --- Programs --- */
+let editingProgId = null;
+function renderPrograms() {
+   const listEl = $('programsList'), formEl = $('progFormWrap');
+   if (!listEl) return;
+   const progs = (db.programs || []).slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (b.createdAt || 0) - (a.createdAt || 0)));
+   if (formEl) {
+      formEl.innerHTML = `
+      <h3 class="panel-title mb-4"><i class="fa-solid fa-calendar-check text-brand-600"></i><span>${esc(t('progTitle'))}</span></h3>
+      <form onsubmit="saveProgram(event)" class="space-y-3 mb-5">
+      <input id="pTitle" type="text" class="input" required>
+      <div class="grid grid-cols-2 gap-3">
+      <input id="pDate" type="date" class="input" placeholder="${esc(t('progDatePh'))}" required>
+      <input id="pBudget" type="number" min="0" class="input" placeholder="${esc(t('progBudgetPh'))}">
+      </div>
+      <textarea id="pDetails" rows="3" class="input" placeholder="${esc(t('progDetailsPh'))}"></textarea>
+      <textarea id="pPlan" rows="3" class="input" placeholder="${esc(t('progPlanPh'))}"></textarea>
+      <div class="flex items-center gap-2">
+      <button type="submit" class="btn-primary !py-2"><i class="fa-solid fa-plus"></i> ${esc(editingProgId ? t('save') : t('progAdd'))}</button>
+      ${editingProgId ? `<button type="button" class="btn-secondary !py-2" onclick="cancelProgramEdit()">${esc(t('cancel'))}</button>` : ''}
+      </div>
+      </form>`;
+   }
+   if (!progs.length) {
+      listEl.innerHTML = `<p class="py-6 text-center text-slate-400 text-sm">${t('progEmpty')}</p>`;
+      return;
+   }
+   const editBtns = (p) => `
+   <div class="flex gap-1 shrink-0">
+   <button class="icon-btn" onclick="editProgram('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+   <button class="icon-btn" onclick="deleteProgram('${p.id}')"><i class="fa-solid fa-trash text-rose-500"></i></button>
+   </div>`;
+   listEl.innerHTML = progs.map(p => `
+   <article class="rounded-2xl border border-slate-200 px-4 py-4 mb-3">
+   <div class="flex items-start gap-3">
+   <div class="min-w-0 flex-1">
+   <h4 class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">${esc(p.title)}</h4>
+   <p class="text-xs text-slate-400 mt-0.5">${fmtDate(p.date)}</p>
+   ${p.budget ? `<p class="text-sm font-bold text-brand-700 mt-1">${fmtMoney(p.budget)}</p>` : ''}
+   ${p.details ? `<p class="text-sm sm:text-base text-slate-700 mt-2 whitespace-pre-line">${esc(p.details)}</p>` : ''}
+   ${p.plan ? `<p class="text-sm text-slate-600 mt-2 whitespace-pre-line">${esc(p.plan)}</p>` : ''}
+   </div>
+   ${editBtns(p)}
+   </div>
+   </article>`).join('');}
+function saveProgram(e) {
+   e.preventDefault();
+   const title = $('pTitle').value.trim();
+   if (!title) return;
+   const date = $('pDate').value;
+   if (!date) return;
+   const budget = $('pBudget').value.trim();
+   const details = $('pDetails').value.trim();
+   const plan = $('pPlan').value.trim();
+   if (!Array.isArray(db.programs)) db.programs = [];
+   if (editingProgId) {
+      const p = db.programs.find(x => x.id === editingProgId);
+      if (p) { p.title = title; p.date = date; p.details = details; p.budget = +budget || 0; p.plan = plan; }
+      if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('prog_edit', title, '');
+      showToast(t('progUpdated'));
+      editingProgId = null;
+   } else {
+      db.programs.push({ id: uid(), title, date, details, budget: +budget || 0, plan, createdAt: Date.now() });
+      if (window.OTWCloudLogActivity) window.OTWCloudLogActivity('prog_add', title, '');
+      showToast(t('progAdded'));
+   }
+   saveDB();
+   renderPrograms();}
+function editProgram(id) {
+   const p = (db.programs || []).find(x => x.id === id);
+   if (!p) return;
+   editingProgId = id;
+   renderPrograms();
+   $('pTitle').value = p.title;
+   $('pDate').value = p.date;
+   $('pBudget').value = p.budget || '';
+   $('pDetails').value = p.details || '';
+   $('pPlan').value = p.plan || '';
+   $('pTitle').focus();
+}
+function cancelProgramEdit() { editingProgId = null; renderPrograms(); }
+function deleteProgram(id) {
+   const p = (db.programs || []).find(x => x.id === id);
+   confirmAction(t('confirmDelete'), () => {
+      db.programs = (db.programs || []).filter(x => x.id !== id);
+      if (window.OTWCloudLogActivity && p) window.OTWCloudLogActivity('prog_delete', p.title, '');
+      saveDB();
+      showToast(t('progDeleted'));
+      renderPrograms();
+   });
+}
+
+      function setDuesFilter(f) { duesFilter = f; renderDues(); }
+
+/* ── Activity timeline ──────────────────────────────────── */ const ACTIVITY_LABELS = { txn_add: 'txnAdded', txn_edit: 'txnUpdated', txn_delete: 'txnDeleted',   notice_add: 'noticeAdded',   notice_edit: 'noticeUpdated',   notice_delete: 'noticeDeleted', prog_add: 'progAdded', prog_edit: 'progUpdated', prog_delete: 'progDeleted', member_add: 'memberAdded', member_edit: 'memberUpdated', member_delete: 'memberDeleted', member_status: 'actStatus', settings_save: 'saved', backup_import: 'backupImported', data_clear: 'dataCleared', demo_load: 'demoLoaded' }; function renderActivity() { const el = $('activityList'); if (!el) return; el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">...</p>'; if (!window.OTWCloudLoadActivity) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; return; } window.OTWCloudLoadActivity(function (items, err) { if (err || !items) { el.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">' + t('errGeneric') + '</p>'; return; } el.innerHTML = items.length ? items.map(function (a) { return '<div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">' + '<div class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left"></i></div>' + '<div class="min-w-0 flex-1"><p class="text-sm text-slate-800"><span class="font-semibold">' + esc(t(ACTIVITY_LABELS[a.action] || 'saved')) + '</span> — ' + esc(a.target || '') + (a.details ? ' <span class="text-slate-500">(' + esc(a.details) + ')</span>' : '') + '</p>' + '<p class="text-xs text-slate-400 mt-0.5">' + esc(a.email || '') + ' • ' + esc(a.role || '') + ' • ' + esc(fmtDate((a.at || '').slice(0, 10))) + ' ' + esc((a.at || '').slice(11, 16)) + '</p></div></div>'; }).join('') : '<p class="py-6 text-center text-slate-400 text-sm">' + t('noData') + '</p>'; }); } /* ── Sidebar / header ───────────────────────────────────── */
 function updateSidebarStats() {
   $('sidebarBalance').textContent = fmtMoney(currentBalance());
   $('sidebarBalanceSub').textContent =
