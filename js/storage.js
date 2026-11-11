@@ -11,7 +11,7 @@ function loadDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.settings && Array.isArray(parsed.members)) { if (!Array.isArray(parsed.notices)) parsed.notices = []; return parsed; }
+      if (parsed && parsed.settings && Array.isArray(parsed.members)) { if (!Array.isArray(parsed.notices)) parsed.notices = []; if (!Array.isArray(parsed.programs)) parsed.programs = []; return parsed; }
     }
   } catch (e) { /* corrupted storage → reseed */ }
   const fresh = seedData();
@@ -105,7 +105,7 @@ function seedData() {
     if (rand() > 0.5) push(dstr(ri(8, 24)), 'expense', 'welfare', ri(1000, 6000), 'দুস্থ পরিবার সহায়তা', '');
   }
 
-  const data = { settings, members, transactions, notices: [] };
+  const data = { settings, members, transactions, notices: [], programs: [] };
   recomputeAllLastPaid(data);
   return data;
 }
