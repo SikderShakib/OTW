@@ -157,7 +157,7 @@ function buildMonthsChecklist(checked) {
     const [y, m] = k.split('-').map(Number);
     const on = Object.prototype.hasOwnProperty.call(preMap, k);
     const amt = preMap[k] != null ? preMap[k] : (on ? fee : '');
-    html += '<label class="mrow flex items-center gap-2 py-2"><input type="checkbox" value="' + k + '"' + (on ? ' checked' : '') + ' onchange="onMonthRowChange(this)"><span class="flex-1">' + monthFullLabel(k) + '</span><input type="number" class="mamt input w-24" min="1" value="' + amt + '" onchange="syncMonthsHint()"></label>';
+    html += '<label class="mrow flex items-center gap-2 py-2"><input type="checkbox" value="' + k + '"' + (on ? ' checked' : '') + ' onchange="onMonthRowChange(this)"><span class="flex-1 min-w-0">' + monthFullLabel(k) + '</span><input type="number" class="mamt input w-24 min-w-0" min="1" value="' + amt + '" onchange="syncMonthsHint()"></label>';
     const d = new Date(y, m, 1);
     k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
