@@ -348,7 +348,7 @@ function renderMemberProfile(p, state) {
     if (!data || !data.settings || !Array.isArray(data.members)) return;
     var keepLang = currentLang; // language stays per-device
     applyingRemote = true;
-    db = { settings: data.settings, members: data.members, transactions: data.transactions || [] };
+    db = { settings: data.settings, members: data.members, transactions: data.transactions || [], programs: data.programs || []}; 
     db.settings.lang = keepLang;
     recomputeAllLastPaid();
     saveDB(); // writes local cache; schedulePush() sees applyingRemote and skips
@@ -374,6 +374,7 @@ function renderMemberProfile(p, state) {
       settings: db.settings,
       members: db.members,
       transactions: db.transactions,
+       programs: db.programs,
       _meta: { updatedAt: stamp, updatedBy: currentUser.uid, updatedByEmail: currentUser.email || '' }
     }).then(function () { setSyncState('synced'); syncMemberProfiles(false); })
       .catch(function (err) { console.warn('[OTW Cloud] push failed', err); setSyncState('error'); });
