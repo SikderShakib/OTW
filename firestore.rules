@@ -44,7 +44,7 @@ service cloud.firestore {
     }
 
     function isAdmin()   { return myRole() == 'admin'; }
-    function canRead()   { return myRole() in ['admin', 'treasurer', 'viewer']; }
+    function canRead()   { return myRole() in ['admin', 'treasurer', 'viewer', 'member']; }
     function canWrite()  { return myRole() in ['admin', 'treasurer']; }
 
     match /roles/{uid} {
@@ -61,7 +61,7 @@ service cloud.firestore {
       allow write: if canWrite();
     }
 
-    match /activity_log/{id} { allow read: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer' || myRole() == 'viewer'); allow create: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer'); allow update, delete: if false; } match /member_profiles/{mid} {
+    match /activity_log/{id} { allow read: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer' || myRole() == 'viewer || myRole() == 'member''); allow create: if signedIn() && (myRole() == 'admin' || myRole() == 'treasurer'); allow update, delete: if false; } match /member_profiles/{mid} {
       allow read: if signedIn() && (myRole() == 'member' || myRole() == 'admin' || myRole() == 'treasurer') && myMemberId() == mid;
       allow create, update, delete: if canWrite();
     }
